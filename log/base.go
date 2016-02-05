@@ -1,4 +1,12 @@
+/**
+* @file logger.go
+* @author ligang
+* @date 2016-02-04
+ */
+
 package log
+
+import ()
 
 const (
 	LEVEL_DEBUG     = 1
@@ -10,6 +18,19 @@ const (
 	LEVEL_ALERT     = 7
 	LEVEL_EMERGENCY = 8
 )
+
+type ILogger interface {
+	Debug(msg []byte)
+	Info(msg []byte)
+	Notice(msg []byte)
+	Warning(msg []byte)
+	Error(msg []byte)
+	Critical(msg []byte)
+	Alert(msg []byte)
+	Emergency(msg []byte)
+
+	Log(level int, msg []byte) error
+}
 
 var logLevels map[int]string
 

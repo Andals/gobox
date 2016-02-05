@@ -10,5 +10,12 @@ package writer
 type Noop struct {
 }
 
-func (this *Noop) write(msg []byte) {
+func (this *Noop) Write(msg []byte) (int, error) {
+	return 0, nil
+}
+
+func (this *Noop) Flush() {
+}
+
+func (this *Noop) Free() {
 }
