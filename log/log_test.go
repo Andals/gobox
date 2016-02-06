@@ -3,6 +3,7 @@ package log
 import (
 	//     "fmt"
 	logWriter "andals/gobox/log/writer"
+	"sync"
 	"testing"
 )
 
@@ -20,21 +21,19 @@ func TestSimpleLogger(t *testing.T) {
 }
 
 func TestAsyncLogger(t *testing.T) {
-	path := "/tmp/test.log"
+	defer FreeAllAsyncLogger()
 
-	w, _ := logWriter.NewFileWriter(path)
-	writer := logWriter.NewBufferWriter(w, 1024)
+	wg := new(sync.WaitGroup)
 
-	l, _ := NewSimpleLogger(writer, LEVEL_INFO)
-	logger, _ := NewAsyncLogger("test", l, 10)
-	msg := []byte("test async logger\n")
+	wg.Add(2)
 
-	testLogger(logger, msg)
+	go asyncLogger1(wg)
+	go asyncLogger2(wg)
+
+	wg.Wait()
 }
 
 func testLogger(logger ILogger, msg []byte) {
-	defer FreeAllAsyncLogger()
-
 	logger.Debug(msg)
 	logger.Info(msg)
 	logger.Notice(msg)
@@ -43,4 +42,34 @@ func testLogger(logger ILogger, msg []byte) {
 	logger.Critical(msg)
 	logger.Alert(msg)
 	logger.Emergency(msg)
+}
+
+func asyncLogger1(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	path := "/tmp/test_a1.log"
+
+	w, _ := logWriter.NewFileWriter(path)
+	writer := logWriter.NewBufferWriter(w, 1024)
+
+	l, _ := NewSimpleLogger(writer, LEVEL_INFO)
+	logger, _ := NewAsyncLogger("test_a1", l, 10)
+	msg := []byte("test async1 logger\n")
+
+	testLogger(logger, msg)
+}
+
+func asyncLogger2(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	path := "/tmp/test_a2.log"
+
+	w, _ := logWriter.NewFileWriter(path)
+	writer := logWriter.NewBufferWriter(w, 1024)
+
+	l, _ := NewSimpleLogger(writer, LEVEL_INFO)
+	logger, _ := NewAsyncLogger("test_a2", l, 10)
+	msg := []byte("test async2 logger\n")
+
+	testLogger(logger, msg)
 }
