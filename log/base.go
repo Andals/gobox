@@ -30,6 +30,9 @@ type ILogger interface {
 	Emergency(msg []byte)
 
 	Log(level int, msg []byte) error
+
+	Flush() error
+	Free()
 }
 
 var logLevels map[int]string

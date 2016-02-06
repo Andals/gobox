@@ -14,6 +14,6 @@ import (
 type IWriter interface {
 	io.Writer
 
-	Flush()
+	Flush() error
 	Free()
 }

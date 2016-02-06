@@ -14,6 +14,7 @@ import (
 
 type simpleLogger struct {
 	globalLevel  int
+	w            logWriter.IWriter
 	levelWriters map[int]logWriter.IWriter
 
 	//replace mutex when logging
@@ -28,8 +29,10 @@ func NewSimpleLogger(writer logWriter.IWriter, globalLevel int) (*simpleLogger, 
 
 	this := &simpleLogger{
 		globalLevel:  globalLevel,
+		w:            writer,
 		levelWriters: make(map[int]logWriter.IWriter),
-		lch:          make(chan int, 1),
+
+		lch: make(chan int, 1),
 	}
 
 	noopWriter := new(logWriter.Noop)
@@ -37,7 +40,7 @@ func NewSimpleLogger(writer logWriter.IWriter, globalLevel int) (*simpleLogger, 
 		if level < globalLevel {
 			this.levelWriters[level] = noopWriter
 		} else {
-			this.levelWriters[level] = writer
+			this.levelWriters[level] = this.w
 		}
 	}
 
@@ -92,4 +95,12 @@ func (this *simpleLogger) Log(level int, msg []byte) error {
 	this.lch <- 1
 
 	return nil
+}
+
+func (this *simpleLogger) Flush() error {
+	return this.w.Flush()
+}
+
+func (this *simpleLogger) Free() {
+	this.w.Free()
 }

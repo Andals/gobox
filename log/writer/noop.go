@@ -14,7 +14,8 @@ func (this *Noop) Write(msg []byte) (int, error) {
 	return 0, nil
 }
 
-func (this *Noop) Flush() {
+func (this *Noop) Flush() error {
+	return nil
 }
 
 func (this *Noop) Free() {

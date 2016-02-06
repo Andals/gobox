@@ -49,7 +49,8 @@ func (this *File) Write(msg []byte) (int, error) {
 	return this.File.Write(msg)
 }
 
-func (this *File) Flush() {
+func (this *File) Flush() error {
+	return nil
 }
 
 func (this *File) Free() {
