@@ -12,22 +12,26 @@ import (
 )
 
 type Buffer struct {
-	w IWriter
+	IWriter
 
-	*bufio.Writer
+	buf *bufio.Writer
 }
 
 func NewBufferWriter(writer IWriter, bufsize int) *Buffer {
 	this := &Buffer{
-		w:      writer,
-		Writer: bufio.NewWriterSize(writer, bufsize),
+		IWriter: writer,
+		buf:     bufio.NewWriterSize(writer, bufsize),
 	}
 
 	return this
 }
 
+func (this *Buffer) Flush() error {
+	return this.buf.Flush()
+}
+
 func (this *Buffer) Free() {
 	this.Flush()
-	this.w.Free()
-	this.Writer = nil
+	this.IWriter.Free()
+	this.buf = nil
 }

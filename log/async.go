@@ -28,7 +28,7 @@ type asyncLogger struct {
 	stCh  chan int
 	wg    *sync.WaitGroup
 
-	*simpleLogger
+	ILogger
 }
 
 // prevent asyncLoggerContainer race
@@ -42,7 +42,7 @@ func init() {
 	acch <- 1
 }
 
-func NewAsyncLogger(key string, logger *simpleLogger, queueLen int) (*asyncLogger, error) {
+func NewAsyncLogger(key string, logger ILogger, queueLen int) (*asyncLogger, error) {
 	defer func() {
 		acch <- 1
 	}()
@@ -60,7 +60,7 @@ func NewAsyncLogger(key string, logger *simpleLogger, queueLen int) (*asyncLogge
 		stCh:  make(chan int),
 		wg:    new(sync.WaitGroup),
 
-		simpleLogger: logger,
+		ILogger: logger,
 	}
 
 	this.wg.Add(1)
@@ -106,17 +106,17 @@ func (this *asyncLogger) logRoutine() {
 	for {
 		select {
 		case am, _ := <-this.msgCh:
-			this.simpleLogger.Log(am.level, am.msg)
+			this.ILogger.Log(am.level, am.msg)
 		case st, _ := <-this.stCh:
 			switch st {
 			case ST_FLUSH:
-				this.simpleLogger.Flush()
+				this.ILogger.Flush()
 			case ST_FREE:
 				for 0 != len(this.msgCh) {
 					am, _ := <-this.msgCh
-					this.simpleLogger.Log(am.level, am.msg)
+					this.ILogger.Log(am.level, am.msg)
 				}
-				this.simpleLogger.Free()
+				this.ILogger.Free()
 				return
 			}
 		}
