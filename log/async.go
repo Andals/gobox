@@ -8,8 +8,8 @@
 package log
 
 import (
-	"errors"
 	"sync"
+	"time"
 )
 
 const (
@@ -23,42 +23,40 @@ type asyncMsg struct {
 }
 
 type asyncLogger struct {
-	key   string
-	msgCh chan *asyncMsg
-	stCh  chan int
-	wg    *sync.WaitGroup
+	msgCh             chan *asyncMsg
+	stCh              chan int
+	wg                *sync.WaitGroup
+	autoFlushInterval time.Duration
 
 	ILogger
 }
 
-// prevent asyncLoggerContainer race
-var acch chan int
-var asyncLoggerContainer map[string]*asyncLogger
+type asyncLoggerList struct {
+	// prevent asyncLoggerList race
+	lch chan int
 
-func init() {
-	asyncLoggerContainer = make(map[string]*asyncLogger)
-
-	acch = make(chan int, 1)
-	acch <- 1
+	loggers []*asyncLogger
 }
 
-func NewAsyncLogger(key string, logger ILogger, queueLen int) (*asyncLogger, error) {
+var allist asyncLoggerList
+
+func init() {
+	allist.lch = make(chan int, 1)
+	allist.lch <- 1
+}
+
+func NewAsyncLogger(logger ILogger, queueLen int, autoFlushInterval time.Duration) (*asyncLogger, error) {
 	defer func() {
-		acch <- 1
+		allist.lch <- 1
 	}()
 
-	<-acch
-
-	_, ok := asyncLoggerContainer[key]
-	if ok {
-		return nil, errors.New("key exists")
-	}
+	<-allist.lch
 
 	this := &asyncLogger{
-		key:   key,
-		msgCh: make(chan *asyncMsg, queueLen),
-		stCh:  make(chan int),
-		wg:    new(sync.WaitGroup),
+		msgCh:             make(chan *asyncMsg, queueLen),
+		stCh:              make(chan int),
+		wg:                new(sync.WaitGroup),
+		autoFlushInterval: autoFlushInterval,
 
 		ILogger: logger,
 	}
@@ -66,13 +64,13 @@ func NewAsyncLogger(key string, logger ILogger, queueLen int) (*asyncLogger, err
 	this.wg.Add(1)
 	go this.logRoutine()
 
-	asyncLoggerContainer[key] = this
+	allist.loggers = append(allist.loggers, this)
 
 	return this, nil
 }
 
 func FreeAllAsyncLogger() {
-	for _, logger := range asyncLoggerContainer {
+	for _, logger := range allist.loggers {
 		logger.Free()
 	}
 }
@@ -107,6 +105,8 @@ func (this *asyncLogger) logRoutine() {
 		select {
 		case am, _ := <-this.msgCh:
 			this.ILogger.Log(am.level, am.msg)
+		case <-time.After(this.autoFlushInterval):
+			this.ILogger.Flush()
 		case st, _ := <-this.stCh:
 			switch st {
 			case ST_FLUSH:
