@@ -9,29 +9,70 @@ package writer
 
 import (
 	"bufio"
+	"time"
 )
 
 type Buffer struct {
-	w IWriter
-
-	*bufio.Writer
+	lockCh            chan int
+	freeCh            chan int
+	autoFlushInterval time.Duration
+	w                 IWriter
+	buf               *bufio.Writer
 }
 
-func NewBufferWriter(writer IWriter, bufsize int) *Buffer {
+func NewBufferWriter(writer IWriter, bufsize int, autoFlushInterval time.Duration) *Buffer {
 	this := &Buffer{
-		w:      writer,
-		Writer: bufio.NewWriterSize(writer, bufsize),
+		lockCh:            make(chan int, 1),
+		freeCh:            make(chan int),
+		autoFlushInterval: autoFlushInterval,
+		w:                 writer,
+		buf:               bufio.NewWriterSize(writer, bufsize),
 	}
+
+	this.lockCh <- 1
+	go this.flushRoutine()
 
 	return this
 }
 
+func (this *Buffer) Write(p []byte) (n int, err error) {
+	defer func() {
+		this.lockCh <- 1
+	}()
+
+	<-this.lockCh
+	return this.buf.Write(p)
+}
+
 func (this *Buffer) Flush() error {
-	return this.Writer.Flush()
+	defer func() {
+		this.lockCh <- 1
+	}()
+
+	<-this.lockCh
+	return this.buf.Flush()
 }
 
 func (this *Buffer) Free() {
+	this.freeCh <- 1
+	<-this.freeCh
+
 	this.Flush()
 	this.w.Free()
-	this.Writer = nil
+	this.buf = nil
+}
+
+func (this *Buffer) flushRoutine() {
+	defer func() {
+		this.freeCh <- 1
+	}()
+
+	for {
+		select {
+		case <-time.After(this.autoFlushInterval):
+			this.Flush()
+		case <-this.freeCh:
+			return
+		}
+	}
 }

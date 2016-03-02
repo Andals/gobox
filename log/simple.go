@@ -18,7 +18,7 @@ type simpleLogger struct {
 	levelWriters map[int]logWriter.IWriter
 
 	//replace mutex when logging
-	lch chan int
+	lockCh chan int
 }
 
 func NewSimpleLogger(writer logWriter.IWriter, globalLevel int) (*simpleLogger, error) {
@@ -32,7 +32,7 @@ func NewSimpleLogger(writer logWriter.IWriter, globalLevel int) (*simpleLogger, 
 		w:            writer,
 		levelWriters: make(map[int]logWriter.IWriter),
 
-		lch: make(chan int, 1),
+		lockCh: make(chan int, 1),
 	}
 
 	noopWriter := new(logWriter.Noop)
@@ -44,7 +44,7 @@ func NewSimpleLogger(writer logWriter.IWriter, globalLevel int) (*simpleLogger, 
 		}
 	}
 
-	this.lch <- 1
+	this.lockCh <- 1
 
 	return this, nil
 }
@@ -90,9 +90,9 @@ func (this *simpleLogger) Log(level int, msg []byte) error {
 	buf := bytes.NewBuffer([]byte("[" + logLevels[level] + "]\t"))
 	buf.Write(msg)
 
-	<-this.lch
+	<-this.lockCh
 	writer.Write(buf.Bytes())
-	this.lch <- 1
+	this.lockCh <- 1
 
 	return nil
 }

@@ -12,7 +12,7 @@ func TestSimpleLogger(t *testing.T) {
 	path := "/tmp/test.log"
 
 	w, _ := logWriter.NewFileWriter(path)
-	writer := logWriter.NewBufferWriter(w, 1024)
+	writer := logWriter.NewBufferWriter(w, 1024, time.Second*2)
 
 	logger, _ := NewSimpleLogger(writer, LEVEL_INFO)
 	msg := []byte("test simple logger\n")
@@ -53,10 +53,10 @@ func asyncLogger1(wg *sync.WaitGroup) {
 	path := "/tmp/test_a1.log"
 
 	w, _ := logWriter.NewFileWriter(path)
-	writer := logWriter.NewBufferWriter(w, 1024)
+	writer := logWriter.NewBufferWriter(w, 1024, time.Second*2)
 
 	l, _ := NewSimpleLogger(writer, LEVEL_INFO)
-	logger, _ := NewAsyncLogger(l, 10, time.Second*2)
+	logger, _ := NewAsyncLogger(l, 10)
 	msg := []byte("test async1 logger\n")
 
 	testLogger(logger, msg)
@@ -70,10 +70,10 @@ func asyncLogger2(wg *sync.WaitGroup) {
 	path := "/tmp/test_a2.log"
 
 	w, _ := logWriter.NewFileWriter(path)
-	writer := logWriter.NewBufferWriter(w, 1024)
+	writer := logWriter.NewBufferWriter(w, 1024, time.Second*2)
 
 	l, _ := NewSimpleLogger(writer, LEVEL_INFO)
-	logger, _ := NewAsyncLogger(l, 10, time.Second*3)
+	logger, _ := NewAsyncLogger(l, 10)
 	msg := []byte("test async2 logger\n")
 
 	testLogger(logger, msg)

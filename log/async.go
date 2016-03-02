@@ -9,7 +9,6 @@ package log
 
 import (
 	"sync"
-	"time"
 )
 
 const (
@@ -23,10 +22,9 @@ type asyncMsg struct {
 }
 
 type asyncLogger struct {
-	msgCh             chan *asyncMsg
-	stCh              chan int
-	wg                *sync.WaitGroup
-	autoFlushInterval time.Duration
+	msgCh chan *asyncMsg
+	stCh  chan int
+	wg    *sync.WaitGroup
 
 	ILogger
 }
@@ -45,7 +43,7 @@ func init() {
 	allist.lch <- 1
 }
 
-func NewAsyncLogger(logger ILogger, queueLen int, autoFlushInterval time.Duration) (*asyncLogger, error) {
+func NewAsyncLogger(logger ILogger, queueLen int) (*asyncLogger, error) {
 	defer func() {
 		allist.lch <- 1
 	}()
@@ -53,10 +51,9 @@ func NewAsyncLogger(logger ILogger, queueLen int, autoFlushInterval time.Duratio
 	<-allist.lch
 
 	this := &asyncLogger{
-		msgCh:             make(chan *asyncMsg, queueLen),
-		stCh:              make(chan int),
-		wg:                new(sync.WaitGroup),
-		autoFlushInterval: autoFlushInterval,
+		msgCh: make(chan *asyncMsg, queueLen),
+		stCh:  make(chan int),
+		wg:    new(sync.WaitGroup),
 
 		ILogger: logger,
 	}
@@ -105,8 +102,6 @@ func (this *asyncLogger) logRoutine() {
 		select {
 		case am, _ := <-this.msgCh:
 			this.ILogger.Log(am.level, am.msg)
-		case <-time.After(this.autoFlushInterval):
-			this.ILogger.Flush()
 		case st, _ := <-this.stCh:
 			switch st {
 			case ST_FLUSH:
