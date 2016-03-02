@@ -7,31 +7,22 @@
 
 package log
 
-import (
-	"sync"
-)
-
-const (
-	ST_FLUSH = 1
-	ST_FREE  = 2
-)
-
 type asyncMsg struct {
 	level int
 	msg   []byte
 }
 
 type asyncLogger struct {
-	msgCh chan *asyncMsg
-	stCh  chan int
-	wg    *sync.WaitGroup
+	msgCh   chan *asyncMsg
+	flushCh chan int
+	freeCh  chan int
 
 	ILogger
 }
 
 type asyncLoggerList struct {
 	// prevent asyncLoggerList race
-	lch chan int
+	lockCh chan int
 
 	loggers []*asyncLogger
 }
@@ -39,26 +30,25 @@ type asyncLoggerList struct {
 var allist asyncLoggerList
 
 func init() {
-	allist.lch = make(chan int, 1)
-	allist.lch <- 1
+	allist.lockCh = make(chan int, 1)
+	allist.lockCh <- 1
 }
 
 func NewAsyncLogger(logger ILogger, queueLen int) (*asyncLogger, error) {
 	defer func() {
-		allist.lch <- 1
+		allist.lockCh <- 1
 	}()
 
-	<-allist.lch
+	<-allist.lockCh
 
 	this := &asyncLogger{
-		msgCh: make(chan *asyncMsg, queueLen),
-		stCh:  make(chan int),
-		wg:    new(sync.WaitGroup),
+		msgCh:   make(chan *asyncMsg, queueLen),
+		flushCh: make(chan int),
+		freeCh:  make(chan int),
 
 		ILogger: logger,
 	}
 
-	this.wg.Add(1)
 	go this.logRoutine()
 
 	allist.loggers = append(allist.loggers, this)
@@ -84,36 +74,37 @@ func (this *asyncLogger) Log(level int, msg []byte) error {
 }
 
 func (this *asyncLogger) Flush() error {
-	this.stCh <- ST_FLUSH
+	this.flushCh <- 1
 
 	return nil
 }
 
 func (this *asyncLogger) Free() {
-	this.stCh <- ST_FREE
+	defer func() {
+		<-this.freeCh
+	}()
 
-	this.wg.Wait()
+	this.freeCh <- 1
 }
 
 func (this *asyncLogger) logRoutine() {
-	defer this.wg.Done()
+	defer func() {
+		this.freeCh <- 1
+	}()
 
 	for {
 		select {
 		case am, _ := <-this.msgCh:
 			this.ILogger.Log(am.level, am.msg)
-		case st, _ := <-this.stCh:
-			switch st {
-			case ST_FLUSH:
-				this.ILogger.Flush()
-			case ST_FREE:
-				for 0 != len(this.msgCh) {
-					am, _ := <-this.msgCh
-					this.ILogger.Log(am.level, am.msg)
-				}
-				this.ILogger.Free()
-				return
+		case <-this.flushCh:
+			this.ILogger.Flush()
+		case <-this.freeCh:
+			for 0 != len(this.msgCh) {
+				am, _ := <-this.msgCh
+				this.ILogger.Log(am.level, am.msg)
 			}
+			this.ILogger.Free()
+			return
 		}
 	}
 }
