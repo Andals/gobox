@@ -21,13 +21,17 @@ type ShellResult struct {
 	Output string
 }
 
+func NewCmd(cmdStr string) *exec.Cmd {
+	return exec.Command("/bin/bash", "-c", cmdStr)
+}
+
 func RunCmd(cmdStr string) *ShellResult {
 	result := &ShellResult{
 		Ok:     true,
 		Output: "",
 	}
 
-	cmd := exec.Command("/bin/bash", "-c", cmdStr)
+	cmd := NewCmd(cmdStr)
 	output, err := cmd.CombinedOutput()
 	result.Output = string(output)
 
@@ -36,6 +40,15 @@ func RunCmd(cmdStr string) *ShellResult {
 		result.Output += err.Error()
 	}
 	return result
+}
+
+func RunCmdBindTerminal(cmdStr string) {
+	cmd := NewCmd(cmdStr)
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
 }
 
 func RunAsUser(cmdStr string, username string) *ShellResult {
