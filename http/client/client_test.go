@@ -1,4 +1,4 @@
-package http
+package client
 
 import (
 	"andals/gobox/log"
@@ -13,13 +13,18 @@ func TestClientGet(t *testing.T) {
 	w, _ := logWriter.NewFileWriter(path)
 	logger, _ := log.NewSimpleLogger(w, log.LEVEL_INFO)
 
-	client := NewClient(logger).SetTimeout(time.Second * 3)
+	client := NewClient(logger).SetTimeout(time.Second * 3).SetMaxIdleConnsPerHost(10)
 	extHeaders := map[string]string{
 		"GO-CLIENT-1": "gobox-httpclient-1",
 		"GO-CLIENT-2": "gobox-httpclient-2",
 	}
 	req, _ := NewRequestForGet("http://www.vdocker.com/test.php", "127.0.0.1", extHeaders)
 
-	cb, err := client.Do(req, 1)
-	fmt.Println(string(cb), err)
+	resp, err := client.Do(req, 1)
+	fmt.Println(string(resp.Contents), resp.T.String(), err)
+
+	req, _ = NewRequestForGet("http://www.vdocker.com/index.html", "127.0.0.1", extHeaders)
+
+	resp, err = client.Do(req, 1)
+	fmt.Println(string(resp.Contents), resp.T.String(), err)
 }
