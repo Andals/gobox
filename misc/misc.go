@@ -8,6 +8,8 @@
 package misc
 
 import (
+	"crypto/md5"
+	"fmt"
 	"os"
 )
 
@@ -60,4 +62,8 @@ func DirExist(path string) bool {
 		return true
 	}
 	return false
+}
+
+func CalMd5(data []byte) string {
+	return fmt.Sprintf("%x", md5.Sum(data))
 }

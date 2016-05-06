@@ -46,3 +46,9 @@ func TestDirExist(t *testing.T) {
 		fmt.Println(d, "is not exist")
 	}
 }
+
+func TestCalMd5(t *testing.T) {
+	md5Str := CalMd5([]byte("abc"))
+
+	fmt.Println(md5Str)
+}
