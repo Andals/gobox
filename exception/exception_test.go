@@ -1,4 +1,4 @@
-package error
+package exception
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 )
 
 func TestError(t *testing.T) {
-	e := NewError(101, "test error")
+	e := New(101, "test exception")
 
-	fmt.Println(e.GetErrno(), e.GetMsg())
+	fmt.Println(e.Errno(), e.Msg())
 	fmt.Println(e.Error())
 }
