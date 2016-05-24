@@ -3,10 +3,12 @@ package misc
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestRandByTime(t *testing.T) {
 	PrintCallerFuncNameForTest()
 
-	fmt.Println(RandByTime(), RandByTime(), RandByTime())
+	tm := time.Now()
+	fmt.Println(RandByTime(&tm), RandByTime(&tm), RandByTime(nil))
 }

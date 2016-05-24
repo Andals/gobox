@@ -28,7 +28,14 @@ func TimeGeneralLayout() string {
 	return layout
 }
 
-func RandByTime() int64 {
-	timeInt := time.Now().UnixNano()
+func RandByTime(t *time.Time) int64 {
+	var timeInt int64
+
+	if t == nil {
+		timeInt = time.Now().UnixNano()
+	} else {
+		timeInt = t.UnixNano()
+	}
+
 	return rand.New(rand.NewSource(timeInt)).Int63()
 }
