@@ -7,7 +7,10 @@
 
 package misc
 
-import ()
+import (
+	"math/rand"
+	"time"
+)
 
 const (
 	TIME_FMT_STR_YEAR   = "2006"
@@ -23,4 +26,9 @@ func TimeGeneralLayout() string {
 	layout += TIME_FMT_STR_HOUR + ":" + TIME_FMT_STR_MINUTE + ":" + TIME_FMT_STR_SECOND
 
 	return layout
+}
+
+func RandByTime() int64 {
+	timeInt := time.Now().UnixNano()
+	return rand.New(rand.NewSource(timeInt)).Int63()
 }

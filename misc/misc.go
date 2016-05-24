@@ -8,9 +8,11 @@
 package misc
 
 import (
+	"andals/gobox/color"
 	"crypto/md5"
 	"fmt"
 	"os"
+	"runtime"
 )
 
 func IntSliceUnique(s []int) []int {
@@ -66,4 +68,12 @@ func DirExist(path string) bool {
 
 func CalMd5(data []byte) string {
 	return fmt.Sprintf("%x", md5.Sum(data))
+}
+
+func PrintCallerFuncNameForTest() {
+	pc, _, _, _ := runtime.Caller(1)
+	f := runtime.FuncForPC(pc)
+
+	c := color.Yellow([]byte(f.Name()))
+	fmt.Println(string(c))
 }
