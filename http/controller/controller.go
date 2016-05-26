@@ -27,11 +27,13 @@ type Controller struct {
 }
 
 func NewController() *Controller {
-	c := new(Controller)
+	this := new(Controller)
 
-	c.exactMatches = make(map[string]ActionFunc)
+	this.exactMatches = make(map[string]ActionFunc)
+	this.beforeAction = DefaultBeforeAction
+	this.afterAction = DefaultAfterAction
 
-	return c
+	return this
 }
 
 func (this *Controller) ExactMatchAction(pattern string, af ActionFunc) {
@@ -90,4 +92,10 @@ func (this *Controller) findActionFunc(r *http.Request) (ActionFunc, []string) {
 	}
 
 	return nil, nil
+}
+
+func DefaultBeforeAction(context *Context, args []string) {
+}
+
+func DefaultAfterAction(context *Context, args []string) {
 }
