@@ -9,6 +9,7 @@ package misc
 
 import (
 	"andals/gobox/color"
+	"bytes"
 	"crypto/md5"
 	"fmt"
 	"os"
@@ -76,4 +77,13 @@ func PrintCallerFuncNameForTest() {
 
 	c := color.Yellow([]byte(f.Name()))
 	fmt.Println(string(c))
+}
+
+func AppendBytes(b []byte, elems ...[]byte) []byte {
+	buf := bytes.NewBuffer(b)
+	for _, e := range elems {
+		buf.Write(e)
+	}
+
+	return buf.Bytes()
 }

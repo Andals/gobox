@@ -62,3 +62,12 @@ func TestCalMd5(t *testing.T) {
 
 	fmt.Println(md5Str)
 }
+
+func TestAppendBytes(t *testing.T) {
+	PrintCallerFuncNameForTest()
+
+	b := []byte("abc")
+	b = AppendBytes(b, []byte("def"), []byte("ghi"))
+
+	fmt.Println(string(b))
+}
