@@ -10,7 +10,7 @@ type Context struct {
 	RespWriter http.ResponseWriter
 	Req        *http.Request
 
-	queryValues url.Values
+	QueryValues url.Values
 	TransData   map[string]interface{}
 	RespBody    []byte
 }
@@ -62,7 +62,7 @@ func (this *Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		RespWriter: w,
 		Req:        r,
 
-		queryValues: r.URL.Query(),
+		QueryValues: r.URL.Query(),
 		TransData:   make(map[string]interface{}),
 	}
 
