@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"net/url"
 	"regexp"
 )
 
@@ -9,8 +10,9 @@ type Context struct {
 	RespWriter http.ResponseWriter
 	Req        *http.Request
 
-	TransData map[string]interface{}
-	RespBody  []byte
+	queryValues url.Values
+	TransData   map[string]interface{}
+	RespBody    []byte
 }
 
 type ActionFunc func(context *Context, args []string)
@@ -60,7 +62,8 @@ func (this *Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		RespWriter: w,
 		Req:        r,
 
-		TransData: make(map[string]interface{}),
+		queryValues: r.URL.Query(),
+		TransData:   make(map[string]interface{}),
 	}
 
 	af, args := this.findActionFunc(r)
