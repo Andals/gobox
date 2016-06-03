@@ -29,20 +29,20 @@ func (this *baseValue) Error() *exception.Exception {
 }
 
 /**
-* @name IntValue
+* @name intValue
 * @{ */
 
 type CheckInt func(v int) bool
 
-type IntValue struct {
+type intValue struct {
 	*baseValue
 
 	p  *int
 	cf CheckInt
 }
 
-func NewIntValue(p *int, errno int, msg string, cf CheckInt) *IntValue {
-	this := &IntValue{
+func NewIntValue(p *int, errno int, msg string, cf CheckInt) *intValue {
+	this := &intValue{
 		baseValue: newBaseValue(errno, msg),
 
 		p: p,
@@ -62,7 +62,7 @@ func NewIntValue(p *int, errno int, msg string, cf CheckInt) *IntValue {
 	return this
 }
 
-func (this *IntValue) Set(str string) error {
+func (this *intValue) Set(str string) error {
 	v, e := strconv.Atoi(str)
 	if e != nil {
 		return e
@@ -73,27 +73,27 @@ func (this *IntValue) Set(str string) error {
 	return nil
 }
 
-func (this *IntValue) Check() bool {
+func (this *intValue) Check() bool {
 	return this.cf(*(this.p))
 }
 
 /**  @} */
 
 /**
-* @name StringValue
+* @name stringValue
 * @{ */
 
 type CheckString func(v string) bool
 
-type StringValue struct {
+type stringValue struct {
 	*baseValue
 
 	p  *string
 	cf CheckString
 }
 
-func NewStringValue(p *string, errno int, msg string, cf CheckString) *StringValue {
-	this := &StringValue{
+func NewStringValue(p *string, errno int, msg string, cf CheckString) *stringValue {
+	this := &stringValue{
 		baseValue: newBaseValue(errno, msg),
 
 		p: p,
@@ -113,13 +113,13 @@ func NewStringValue(p *string, errno int, msg string, cf CheckString) *StringVal
 	return this
 }
 
-func (this *StringValue) Set(str string) error {
+func (this *stringValue) Set(str string) error {
 	*(this.p) = str
 
 	return nil
 }
 
-func (this *StringValue) Check() bool {
+func (this *stringValue) Check() bool {
 	return this.cf(*(this.p))
 }
 

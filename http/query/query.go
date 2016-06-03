@@ -2,18 +2,17 @@ package query
 
 import (
 	"net/url"
+	"strings"
 
 	"andals/gobox/exception"
 )
 
 type QuerySet struct {
-	actual *url.Values
 	formal map[string]Value
 }
 
-func NewQuerySet(values *url.Values) *QuerySet {
+func NewQuerySet() *QuerySet {
 	this := &QuerySet{
-		actual: values,
 		formal: make(map[string]Value),
 	}
 
@@ -24,9 +23,18 @@ func (this *QuerySet) Var(name string, v Value) {
 	this.formal[name] = v
 }
 
-func (this *QuerySet) Parse() *exception.Exception {
+func (this *QuerySet) IntVar(p *int, name string, errno int, msg string, cf CheckInt) {
+	this.Var(name, NewIntValue(p, errno, msg, cf))
+}
+
+func (this *QuerySet) StringVar(p *string, name string, errno int, msg string, cf CheckString) {
+	this.Var(name, NewStringValue(p, errno, msg, cf))
+}
+
+func (this *QuerySet) Parse(actual *url.Values) *exception.Exception {
 	for name, v := range this.formal {
-		err := v.Set(this.actual.Get(name))
+		str := strings.TrimSpace(actual.Get(name))
+		err := v.Set(str)
 		if err != nil {
 			return v.Error()
 		}
