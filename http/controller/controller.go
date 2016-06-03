@@ -10,7 +10,7 @@ type Context struct {
 	RespWriter http.ResponseWriter
 	Req        *http.Request
 
-	QueryValues url.Values
+	QueryValues *url.Values
 	TransData   map[string]interface{}
 	RespBody    []byte
 }
@@ -62,9 +62,10 @@ func (this *Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		RespWriter: w,
 		Req:        r,
 
-		QueryValues: r.URL.Query(),
-		TransData:   make(map[string]interface{}),
+		TransData: make(map[string]interface{}),
 	}
+	vs := r.URL.Query()
+	context.QueryValues = &vs
 
 	af, args := this.findActionFunc(r)
 	if af == nil {
