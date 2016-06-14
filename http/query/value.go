@@ -63,7 +63,13 @@ func NewIntValue(p *int, errno int, msg string, cf CheckInt) *intValue {
 }
 
 func (this *intValue) Set(str string) error {
-	v, e := strconv.Atoi(str)
+	var v int = 0
+	var e error = nil
+
+	if str != "" {
+		v, e = strconv.Atoi(str)
+	}
+
 	if e != nil {
 		return e
 	}
