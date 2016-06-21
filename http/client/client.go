@@ -81,13 +81,18 @@ func (this *Client) Do(req *http.Request, retry int) (*Response, error) {
 		[]byte("Method:" + req.Method),
 		[]byte("Host: " + req.Host),
 		[]byte("Url:" + req.URL.String()),
-		[]byte("StatusCode:" + strconv.Itoa(resp.StatusCode)),
-		[]byte("Time:" + t.String() + "\n"),
+		[]byte("Time:" + t.String()),
 	}
-	this.logger.Info(bytes.Join(msg, []byte("\t")))
 	if err != nil {
+		if resp != nil {
+			msg = append(msg, []byte("StatusCode:"+strconv.Itoa(resp.StatusCode)))
+		}
+		msg = append(msg, []byte("ErrMsg:"+err.Error()+"\n"))
+		this.logger.Error(bytes.Join(msg, []byte("\t")))
 		return nil, err
 	}
+	msg = append(msg, []byte("StatusCode:"+strconv.Itoa(resp.StatusCode)+"\n"))
+	this.logger.Info(bytes.Join(msg, []byte("\t")))
 
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
