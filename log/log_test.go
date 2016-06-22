@@ -15,7 +15,7 @@ func TestSimpleLogger(t *testing.T) {
 	writer := logWriter.NewBufferWriter(w, 1024)
 
 	logger, _ := NewSimpleLogger(writer, LEVEL_INFO)
-	msg := []byte("test simple logger\n")
+	msg := []byte("test simple logger")
 
 	testLogger(logger, msg)
 	logger.Free()
@@ -57,7 +57,7 @@ func asyncLogger1(wg *sync.WaitGroup) {
 
 	l, _ := NewSimpleLogger(writer, LEVEL_INFO)
 	logger, _ := NewAsyncLogger(l, 10)
-	msg := []byte("test async1 logger\n")
+	msg := []byte("test async1 logger")
 
 	testLogger(logger, msg)
 	time.Sleep(time.Second * 3)
@@ -74,7 +74,7 @@ func asyncLogger2(wg *sync.WaitGroup) {
 
 	l, _ := NewSimpleLogger(writer, LEVEL_INFO)
 	logger, _ := NewAsyncLogger(l, 10)
-	msg := []byte("test async2 logger\n")
+	msg := []byte("test async2 logger")
 
 	testLogger(logger, msg)
 }

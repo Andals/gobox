@@ -89,6 +89,7 @@ func (this *simpleLogger) Log(level int, msg []byte) error {
 
 	buf := bytes.NewBuffer([]byte("[" + logLevels[level] + "]\t"))
 	buf.Write(msg)
+	buf.Write([]byte("\n"))
 
 	<-this.lockCh
 	writer.Write(buf.Bytes())
