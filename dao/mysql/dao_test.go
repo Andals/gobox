@@ -84,3 +84,90 @@ func TestDaoQueryRow(t *testing.T) {
 		fmt.Println(item)
 	}
 }
+
+func TestDaoTrans(t *testing.T) {
+	misc.PrintCallerFuncNameForTest()
+
+	dao.Begin()
+
+	row := dao.QueryRow("SELECT * FROM test_mysql WHERE id = ?", 1)
+	item := new(tableTestMysqlRowItem)
+	err := row.Scan(&item.Id, &item.AddTime, &item.EditTime, &item.Name)
+	if err != nil {
+		fmt.Println("row scan error: " + err.Error())
+	} else {
+		fmt.Println(item)
+	}
+
+	dao.Commit()
+
+	err = dao.Rollback()
+	fmt.Println(err)
+}
+
+func TestDaoInsert(t *testing.T) {
+	misc.PrintCallerFuncNameForTest()
+
+	r, e := dao.Insert(
+		TABLE_NAME,
+		[]string{"name"},
+		[]interface{}{"a"},
+		[]interface{}{"b"},
+		[]interface{}{"c"},
+	)
+
+	fmt.Println(r, e)
+}
+
+func TestDaoDeleteById(t *testing.T) {
+	misc.PrintCallerFuncNameForTest()
+
+	r, e := dao.DeleteById(TABLE_NAME, 1)
+
+	fmt.Println(r, e)
+}
+
+func TestDaoUpdateById(t *testing.T) {
+	misc.PrintCallerFuncNameForTest()
+
+	r, e := dao.UpdateById(
+		TABLE_NAME,
+		7,
+		NewColQueryItem("name", "", "e"),
+	)
+
+	fmt.Println(r, e)
+}
+
+func TestDaoSelectById(t *testing.T) {
+	misc.PrintCallerFuncNameForTest()
+
+	r := dao.SelectById(
+		"*",
+		TABLE_NAME,
+		7,
+	)
+
+	fmt.Println(r)
+}
+
+func TestDaoSelectByIds(t *testing.T) {
+	misc.PrintCallerFuncNameForTest()
+
+	rows, err := dao.SelectByIds(
+		"*",
+		TABLE_NAME,
+		[]uint64{5, 7},
+	)
+
+	fmt.Println(err)
+	for rows.Next() {
+		item := new(tableTestMysqlRowItem)
+		err = rows.Scan(&item.Id, &item.AddTime, &item.EditTime, &item.Name)
+		if err != nil {
+			fmt.Println("rows scan error: " + err.Error())
+		} else {
+			fmt.Println(item)
+		}
+	}
+}
