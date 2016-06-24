@@ -122,7 +122,7 @@ func (this *Dao) Insert(tableName string, colNames []string, colsValues ...[]int
 	return this.Exec(this.sqb.Query(), this.sqb.Args()...)
 }
 
-func (this *Dao) DeleteById(tableName string, id uint64) (sql.Result, error) {
+func (this *Dao) DeleteById(tableName string, id interface{}) (sql.Result, error) {
 	this.sqb.
 		Delete(tableName).
 		WhereConditionAnd(NewColQueryItem("id", COND_EQUAL, id))
@@ -130,7 +130,7 @@ func (this *Dao) DeleteById(tableName string, id uint64) (sql.Result, error) {
 	return this.Exec(this.sqb.Query(), this.sqb.Args()...)
 }
 
-func (this *Dao) UpdateById(tableName string, id uint64, setItems ...*ColQueryItem) (sql.Result, error) {
+func (this *Dao) UpdateById(tableName string, id interface{}, setItems ...*ColQueryItem) (sql.Result, error) {
 	this.sqb.
 		Update(tableName).
 		Set(setItems...).
@@ -139,7 +139,7 @@ func (this *Dao) UpdateById(tableName string, id uint64, setItems ...*ColQueryIt
 	return this.Exec(this.sqb.Query(), this.sqb.Args()...)
 }
 
-func (this *Dao) SelectById(what, tableName string, id uint64) *sql.Row {
+func (this *Dao) SelectById(what, tableName string, id interface{}) *sql.Row {
 	this.sqb.
 		Select(what, tableName).
 		WhereConditionAnd(NewColQueryItem("id", COND_EQUAL, id))
@@ -147,7 +147,7 @@ func (this *Dao) SelectById(what, tableName string, id uint64) *sql.Row {
 	return this.QueryRow(this.sqb.Query(), this.sqb.Args()...)
 }
 
-func (this *Dao) SelectByIds(what, tableName string, ids []uint64) (*sql.Rows, error) {
+func (this *Dao) SelectByIds(what, tableName string, ids []interface{}) (*sql.Rows, error) {
 	is := make([]interface{}, len(ids))
 	for k, v := range ids {
 		is[k] = v

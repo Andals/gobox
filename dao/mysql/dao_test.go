@@ -157,7 +157,7 @@ func TestDaoSelectByIds(t *testing.T) {
 	rows, err := dao.SelectByIds(
 		"*",
 		TABLE_NAME,
-		[]uint64{5, 7},
+		[]interface{}{5, 7},
 	)
 
 	fmt.Println(err)
