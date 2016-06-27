@@ -89,26 +89,28 @@ func (this *Dao) Begin() error {
 }
 
 func (this *Dao) Commit() error {
+	defer func() {
+		this.tx = nil
+	}()
+
 	if this.tx != nil {
 		this.logQuery("COMMIT")
 
-		err := this.tx.Commit()
-		this.tx = nil
-
-		return err
+		return this.tx.Commit()
 	}
 
 	return errors.New("Not in trans")
 }
 
 func (this *Dao) Rollback() error {
+	defer func() {
+		this.tx = nil
+	}()
+
 	if this.tx != nil {
 		this.logQuery("ROLLBACK")
 
-		err := this.tx.Rollback()
-		this.tx = nil
-
-		return err
+		return this.tx.Rollback()
 	}
 
 	return errors.New("Not in trans")
