@@ -18,6 +18,7 @@ func TestSQBInsert(t *testing.T) {
 
 	printQueryAndArgs()
 }
+
 func TestSQBValues(t *testing.T) {
 	misc.PrintCallerFuncNameForTest()
 

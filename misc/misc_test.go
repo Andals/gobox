@@ -55,10 +55,10 @@ func TestDirExist(t *testing.T) {
 	}
 }
 
-func TestCalMd5(t *testing.T) {
+func TestMd5(t *testing.T) {
 	PrintCallerFuncNameForTest()
 
-	md5Str := CalMd5([]byte("abc"))
+	md5Str := Md5([]byte("abc"))
 
 	fmt.Println(md5Str)
 }

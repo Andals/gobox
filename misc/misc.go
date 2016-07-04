@@ -67,7 +67,7 @@ func DirExist(path string) bool {
 	return false
 }
 
-func CalMd5(data []byte) string {
+func Md5(data []byte) string {
 	return fmt.Sprintf("%x", md5.Sum(data))
 }
 
