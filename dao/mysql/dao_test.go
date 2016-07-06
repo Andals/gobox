@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"database/sql"
 	"fmt"
 	"strconv"
 	"testing"
@@ -79,7 +80,11 @@ func TestDaoQueryRow(t *testing.T) {
 	item := new(tableTestMysqlRowItem)
 	err := row.Scan(&item.Id, &item.AddTime, &item.EditTime, &item.Name)
 	if err != nil {
-		fmt.Println("row scan error: " + err.Error())
+		if err == sql.ErrNoRows {
+			fmt.Println("no rows: " + err.Error())
+		} else {
+			fmt.Println("row scan error: " + err.Error())
+		}
 	} else {
 		fmt.Println(item)
 	}

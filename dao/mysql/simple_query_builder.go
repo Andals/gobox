@@ -112,6 +112,10 @@ func (this *SimpleQueryBuilder) Select(what, tableName string) *SimpleQueryBuild
 }
 
 func (this *SimpleQueryBuilder) WhereConditionAnd(condItems ...*ColQueryItem) *SimpleQueryBuilder {
+	if len(condItems) == 0 {
+		return this
+	}
+
 	this.query += " WHERE "
 
 	this.buildWhereCondition("AND", condItems...)
@@ -120,6 +124,10 @@ func (this *SimpleQueryBuilder) WhereConditionAnd(condItems ...*ColQueryItem) *S
 }
 
 func (this *SimpleQueryBuilder) WhereConditionOr(condItems ...*ColQueryItem) *SimpleQueryBuilder {
+	if len(condItems) == 0 {
+		return this
+	}
+
 	this.query += " WHERE "
 
 	this.buildWhereCondition("OR", condItems...)
@@ -128,18 +136,26 @@ func (this *SimpleQueryBuilder) WhereConditionOr(condItems ...*ColQueryItem) *Si
 }
 
 func (this *SimpleQueryBuilder) OrderBy(orderBy string) *SimpleQueryBuilder {
-	this.query += " ORDER BY " + orderBy
+	if orderBy != "" {
+		this.query += " ORDER BY " + orderBy
+	}
 
 	return this
 }
 
 func (this *SimpleQueryBuilder) GroupBy(groupBy string) *SimpleQueryBuilder {
-	this.query += " GROUP BY " + groupBy
+	if groupBy != "" {
+		this.query += " GROUP BY " + groupBy
+	}
 
 	return this
 }
 
 func (this *SimpleQueryBuilder) HavingConditionAnd(condItems ...*ColQueryItem) *SimpleQueryBuilder {
+	if len(condItems) == 0 {
+		return this
+	}
+
 	this.query += " HAVING "
 
 	this.buildWhereCondition("AND", condItems...)
@@ -148,6 +164,10 @@ func (this *SimpleQueryBuilder) HavingConditionAnd(condItems ...*ColQueryItem) *
 }
 
 func (this *SimpleQueryBuilder) HavingConditionOr(condItems ...*ColQueryItem) *SimpleQueryBuilder {
+	if len(condItems) == 0 {
+		return this
+	}
+
 	this.query += " HAVING "
 
 	this.buildWhereCondition("OR", condItems...)
@@ -156,6 +176,10 @@ func (this *SimpleQueryBuilder) HavingConditionOr(condItems ...*ColQueryItem) *S
 }
 
 func (this *SimpleQueryBuilder) Limit(offset, rowCnt int) *SimpleQueryBuilder {
+	if rowCnt <= 0 || offset < 0 {
+		return this
+	}
+
 	this.query += " LIMIT ?, ?"
 	this.args = append(this.args, offset, rowCnt)
 

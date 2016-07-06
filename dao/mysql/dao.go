@@ -16,11 +16,11 @@ const (
 )
 
 type Dao struct {
-	db  *sql.DB
-	tx  *sql.Tx
-	sqb *SimpleQueryBuilder
+	db *sql.DB
+	tx *sql.Tx
 
 	logger log.ILogger
+	Sqb    *SimpleQueryBuilder
 }
 
 func DsnTcpIpV4(username, password, host, port, dbname string) string {
@@ -38,11 +38,11 @@ func NewDao(dsn string, logger log.ILogger) (*Dao, error) {
 	}
 
 	return &Dao{
-		db:  db,
-		tx:  nil,
-		sqb: new(SimpleQueryBuilder),
+		db: db,
+		tx: nil,
 
 		logger: logger,
+		Sqb:    new(SimpleQueryBuilder),
 	}, nil
 }
 
@@ -117,36 +117,36 @@ func (this *Dao) Rollback() error {
 }
 
 func (this *Dao) Insert(tableName string, colNames []string, colsValues ...[]interface{}) (sql.Result, error) {
-	this.sqb.
+	this.Sqb.
 		Insert(tableName, colNames...).
 		Values(colsValues...)
 
-	return this.Exec(this.sqb.Query(), this.sqb.Args()...)
+	return this.Exec(this.Sqb.Query(), this.Sqb.Args()...)
 }
 
 func (this *Dao) DeleteById(tableName string, id interface{}) (sql.Result, error) {
-	this.sqb.
+	this.Sqb.
 		Delete(tableName).
 		WhereConditionAnd(NewColQueryItem("id", COND_EQUAL, id))
 
-	return this.Exec(this.sqb.Query(), this.sqb.Args()...)
+	return this.Exec(this.Sqb.Query(), this.Sqb.Args()...)
 }
 
 func (this *Dao) UpdateById(tableName string, id interface{}, setItems ...*ColQueryItem) (sql.Result, error) {
-	this.sqb.
+	this.Sqb.
 		Update(tableName).
 		Set(setItems...).
 		WhereConditionAnd(NewColQueryItem("id", COND_EQUAL, id))
 
-	return this.Exec(this.sqb.Query(), this.sqb.Args()...)
+	return this.Exec(this.Sqb.Query(), this.Sqb.Args()...)
 }
 
 func (this *Dao) SelectById(what, tableName string, id interface{}) *sql.Row {
-	this.sqb.
+	this.Sqb.
 		Select(what, tableName).
 		WhereConditionAnd(NewColQueryItem("id", COND_EQUAL, id))
 
-	return this.QueryRow(this.sqb.Query(), this.sqb.Args()...)
+	return this.QueryRow(this.Sqb.Query(), this.Sqb.Args()...)
 }
 
 func (this *Dao) SelectByIds(what, tableName string, ids []interface{}) (*sql.Rows, error) {
@@ -155,11 +155,11 @@ func (this *Dao) SelectByIds(what, tableName string, ids []interface{}) (*sql.Ro
 		is[k] = v
 	}
 
-	this.sqb.
+	this.Sqb.
 		Select(what, tableName).
 		WhereConditionAnd(NewColQueryItem("id", COND_IN, is...))
 
-	return this.Query(this.sqb.Query(), this.sqb.Args()...)
+	return this.Query(this.Sqb.Query(), this.Sqb.Args()...)
 }
 
 func (this *Dao) logQuery(query string, args ...interface{}) {
