@@ -71,12 +71,12 @@ func (this *ShardMap) Del(key string) {
 	si.Unlock()
 }
 
-func (this *ShardMap) Walk(wf func(k string, v interface{})) {
-	type kvItem struct {
-		key   string
-		value interface{}
-	}
+type kvItem struct {
+	key   string
+	value interface{}
+}
 
+func (this *ShardMap) Walk(wf func(k string, v interface{})) {
 	for _, si := range this.shards {
 		kvCh := make(chan *kvItem)
 		si.RLock()
