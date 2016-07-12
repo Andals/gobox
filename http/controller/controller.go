@@ -1,9 +1,15 @@
 package controller
 
 import (
+	//     "fmt"
 	"net/http"
 	"net/url"
 	"regexp"
+)
+
+const (
+	DEF_REMOTE_REAL_IP_HEADER_KEY   = "REMOTE-REAL-IP"
+	DEF_REMOTE_REAL_PORT_HEADER_KEY = "REMOTE-REAL-PORT"
 )
 
 type Context struct {
@@ -13,6 +19,8 @@ type Context struct {
 	QueryValues *url.Values
 	TransData   map[string]interface{}
 	RespBody    []byte
+
+	RemoteRealAddr *RemoteAddr
 }
 
 type ActionFunc func(context *Context, args []string)
@@ -26,6 +34,9 @@ type Controller struct {
 
 	beforeAction ActionFunc
 	afterAction  ActionFunc
+
+	remoteRealIpHeaderKey   string
+	remoteRealPortHeaderKey string
 }
 
 func NewController() *Controller {
@@ -35,43 +46,55 @@ func NewController() *Controller {
 	this.beforeAction = DefaultBeforeAction
 	this.afterAction = DefaultAfterAction
 
+	this.remoteRealIpHeaderKey = DEF_REMOTE_REAL_IP_HEADER_KEY
+	this.remoteRealPortHeaderKey = DEF_REMOTE_REAL_PORT_HEADER_KEY
+
 	return this
 }
 
-func (this *Controller) ExactMatchAction(pattern string, af ActionFunc) {
+func (this *Controller) AddExactMatchAction(pattern string, af ActionFunc) {
 	this.exactMatches[pattern] = af
 }
 
-func (this *Controller) RegexMatchAction(pattern string, af ActionFunc) {
+func (this *Controller) AddRegexMatchAction(pattern string, af ActionFunc) {
 	regex := regexp.MustCompile(pattern)
 
 	this.regexMatches.regexSlice = append(this.regexMatches.regexSlice, regex)
 	this.regexMatches.actionSlice = append(this.regexMatches.actionSlice, af)
 }
 
-func (this *Controller) BeforeAction(af ActionFunc) {
+func (this *Controller) SetBeforeAction(af ActionFunc) {
 	this.beforeAction = af
 }
 
-func (this *Controller) AfterAction(af ActionFunc) {
+func (this *Controller) SetAfterAction(af ActionFunc) {
 	this.afterAction = af
 }
 
+func (this *Controller) SetRemoteRealIpHeaderKey(key string) {
+	this.remoteRealIpHeaderKey = key
+}
+
+func (this *Controller) SetRemoteRealPortHeaderKey(key string) {
+	this.remoteRealPortHeaderKey = key
+}
+
 func (this *Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	context := &Context{
-		RespWriter: w,
-		Req:        r,
-
-		TransData: make(map[string]interface{}),
-	}
-	vs := r.URL.Query()
-	context.QueryValues = &vs
-
 	af, args := this.findActionFunc(r)
 	if af == nil {
 		http.NotFound(w, r)
 		return
 	}
+
+	context := &Context{
+		RespWriter: w,
+		Req:        r,
+
+		TransData:      make(map[string]interface{}),
+		RemoteRealAddr: ParseRemoteAddr(r, this.remoteRealIpHeaderKey, this.remoteRealPortHeaderKey),
+	}
+	vs := r.URL.Query()
+	context.QueryValues = &vs
 
 	this.beforeAction(context, args)
 	af(context, args)

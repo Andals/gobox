@@ -9,11 +9,11 @@ import (
 func main() {
 	cl := controller.NewController()
 
-	cl.BeforeAction(beforeAction)
-	cl.AfterAction(afterAction)
+	cl.SetBeforeAction(beforeAction)
+	cl.SetAfterAction(afterAction)
 
-	cl.ExactMatchAction("/exact", exactAction)
-	cl.RegexMatchAction("^/[a-z]+([0-9]+)", regexAction)
+	cl.AddExactMatchAction("/exact", exactAction)
+	cl.AddRegexMatchAction("^/[a-z]+([0-9]+)", regexAction)
 
 	gracehttp.ListenAndServe(":8001", cl)
 }
