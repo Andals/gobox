@@ -3,7 +3,6 @@ package controller
 import (
 	//     "fmt"
 	"net/http"
-	"net/url"
 	"regexp"
 )
 
@@ -11,17 +10,6 @@ const (
 	DEF_REMOTE_REAL_IP_HEADER_KEY   = "REMOTE-REAL-IP"
 	DEF_REMOTE_REAL_PORT_HEADER_KEY = "REMOTE-REAL-PORT"
 )
-
-type Context struct {
-	RespWriter http.ResponseWriter
-	Req        *http.Request
-
-	QueryValues *url.Values
-	TransData   map[string]interface{}
-	RespBody    []byte
-
-	RemoteRealAddr *RemoteAddr
-}
 
 type ActionFunc func(context *Context, args []string)
 
@@ -86,15 +74,7 @@ func (this *Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	context := &Context{
-		RespWriter: w,
-		Req:        r,
-
-		TransData:      make(map[string]interface{}),
-		RemoteRealAddr: ParseRemoteAddr(r, this.remoteRealIpHeaderKey, this.remoteRealPortHeaderKey),
-	}
-	vs := r.URL.Query()
-	context.QueryValues = &vs
+	context := NewContext(r, w, ParseRemoteAddr(r, this.remoteRealIpHeaderKey, this.remoteRealPortHeaderKey))
 
 	this.beforeAction(context, args)
 	af(context, args)
