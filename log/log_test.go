@@ -2,6 +2,8 @@ package log
 
 import (
 	//     "fmt"
+	"andals/gobox/log/formater"
+	"andals/gobox/log/level"
 	logWriter "andals/gobox/log/writer"
 	"sync"
 	"testing"
@@ -14,7 +16,7 @@ func TestSimpleLogger(t *testing.T) {
 	w, _ := logWriter.NewFileWriter(path)
 	writer := logWriter.NewBufferWriter(w, 1024)
 
-	logger, _ := NewSimpleLogger(writer, LEVEL_INFO)
+	logger, _ := NewSimpleLogger(writer, level.LEVEL_INFO, new(formater.Simple))
 	msg := []byte("test simple logger")
 
 	testLogger(logger, msg)
@@ -55,7 +57,7 @@ func asyncLogger1(wg *sync.WaitGroup) {
 	w, _ := logWriter.NewFileWriter(path)
 	writer, _ := logWriter.NewBufferWriterWithTimeFlush(w, 1024, time.Second*2)
 
-	l, _ := NewSimpleLogger(writer, LEVEL_INFO)
+	l, _ := NewSimpleLogger(writer, level.LEVEL_INFO, new(formater.Simple))
 	logger, _ := NewAsyncLogger(l, 10)
 	msg := []byte("test async1 logger")
 
@@ -72,7 +74,7 @@ func asyncLogger2(wg *sync.WaitGroup) {
 	w, _ := logWriter.NewFileWriter(path)
 	writer, _ := logWriter.NewBufferWriterWithTimeFlush(w, 1024, time.Second*2)
 
-	l, _ := NewSimpleLogger(writer, LEVEL_INFO)
+	l, _ := NewSimpleLogger(writer, level.LEVEL_INFO, new(formater.Simple))
 	logger, _ := NewAsyncLogger(l, 10)
 	msg := []byte("test async2 logger")
 

@@ -7,22 +7,25 @@
 package log
 
 import (
-	logWriter "andals/gobox/log/writer"
-	"bytes"
 	"errors"
+
+	logFormater "andals/gobox/log/formater"
+	logLevel "andals/gobox/log/level"
+	logWriter "andals/gobox/log/writer"
 )
 
 type simpleLogger struct {
 	globalLevel  int
 	w            logWriter.IWriter
 	levelWriters map[int]logWriter.IWriter
+	formater     logFormater.IFormater
 
 	//replace mutex when logging
 	lockCh chan int
 }
 
-func NewSimpleLogger(writer logWriter.IWriter, globalLevel int) (*simpleLogger, error) {
-	_, ok := logLevels[globalLevel]
+func NewSimpleLogger(writer logWriter.IWriter, globalLevel int, formater logFormater.IFormater) (*simpleLogger, error) {
+	_, ok := logLevel.LogLevels[globalLevel]
 	if !ok {
 		errors.New("Global level not exists")
 	}
@@ -36,7 +39,7 @@ func NewSimpleLogger(writer logWriter.IWriter, globalLevel int) (*simpleLogger, 
 	}
 
 	noopWriter := new(logWriter.Noop)
-	for level, _ := range logLevels {
+	for level, _ := range logLevel.LogLevels {
 		if level < globalLevel {
 			this.levelWriters[level] = noopWriter
 		} else {
@@ -44,41 +47,46 @@ func NewSimpleLogger(writer logWriter.IWriter, globalLevel int) (*simpleLogger, 
 		}
 	}
 
+	if formater == nil {
+		formater = new(logFormater.Noop)
+	}
+	this.formater = formater
+
 	this.lockCh <- 1
 
 	return this, nil
 }
 
 func (this *simpleLogger) Debug(msg []byte) {
-	this.Log(LEVEL_DEBUG, msg)
+	this.Log(logLevel.LEVEL_DEBUG, msg)
 }
 
 func (this *simpleLogger) Info(msg []byte) {
-	this.Log(LEVEL_INFO, msg)
+	this.Log(logLevel.LEVEL_INFO, msg)
 }
 
 func (this *simpleLogger) Notice(msg []byte) {
-	this.Log(LEVEL_NOTICE, msg)
+	this.Log(logLevel.LEVEL_NOTICE, msg)
 }
 
 func (this *simpleLogger) Warning(msg []byte) {
-	this.Log(LEVEL_WARNING, msg)
+	this.Log(logLevel.LEVEL_WARNING, msg)
 }
 
 func (this *simpleLogger) Error(msg []byte) {
-	this.Log(LEVEL_ERROR, msg)
+	this.Log(logLevel.LEVEL_ERROR, msg)
 }
 
 func (this *simpleLogger) Critical(msg []byte) {
-	this.Log(LEVEL_CRITICAL, msg)
+	this.Log(logLevel.LEVEL_CRITICAL, msg)
 }
 
 func (this *simpleLogger) Alert(msg []byte) {
-	this.Log(LEVEL_ALERT, msg)
+	this.Log(logLevel.LEVEL_ALERT, msg)
 }
 
 func (this *simpleLogger) Emergency(msg []byte) {
-	this.Log(LEVEL_EMERGENCY, msg)
+	this.Log(logLevel.LEVEL_EMERGENCY, msg)
 }
 
 func (this *simpleLogger) Log(level int, msg []byte) error {
@@ -87,12 +95,10 @@ func (this *simpleLogger) Log(level int, msg []byte) error {
 		errors.New("Level not exists")
 	}
 
-	buf := bytes.NewBuffer([]byte("[" + logLevels[level] + "]\t"))
-	buf.Write(msg)
-	buf.Write([]byte("\n"))
+	msg = this.formater.Format(level, msg)
 
 	<-this.lockCh
-	writer.Write(buf.Bytes())
+	writer.Write(msg)
 	this.lockCh <- 1
 
 	return nil
