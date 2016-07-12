@@ -10,7 +10,7 @@ import (
 func TestWeb(t *testing.T) {
 	misc.PrintCallerFuncNameForTest()
 
-	f := New("xyz")
+	f := NewWeb("xyz")
 
 	b := f.Format(level.LEVEL_EMERGENCY, []byte("abc"))
 	t.Log(string(b))

@@ -11,7 +11,7 @@ type Web struct {
 	logId []byte
 }
 
-func New(logId string) *Web {
+func NewWeb(logId string) *Web {
 	return &Web{
 		logId: []byte(logId),
 	}
