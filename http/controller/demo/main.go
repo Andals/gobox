@@ -9,8 +9,8 @@ import (
 func main() {
 	cl := controller.NewController()
 
-	cl.SetBeforeAction(beforeAction)
-	cl.SetAfterAction(afterAction)
+	cl.AddBeforeAction("^/exact", beforeAction)
+	cl.AddAfterAction("^/([a-z]+)[0-9]+", afterAction)
 
 	cl.AddExactMatchAction("/exact", exactAction)
 	cl.AddRegexMatchAction("^/[a-z]+([0-9]+)", regexAction)
@@ -19,7 +19,7 @@ func main() {
 }
 
 func beforeAction(context *controller.Context, args []string) {
-	context.RespBody = []byte("before")
+	context.RespBody = []byte("exact before")
 }
 
 func exactAction(context *controller.Context, args []string) {
@@ -31,5 +31,5 @@ func regexAction(context *controller.Context, args []string) {
 }
 
 func afterAction(context *controller.Context, args []string) {
-	context.RespBody = misc.AppendBytes(context.RespBody, []byte("after\n"))
+	context.RespBody = misc.AppendBytes(context.RespBody, []byte("after "+args[0]+"\n"))
 }
