@@ -2,22 +2,24 @@ package log
 
 import (
 	//     "fmt"
-	"andals/gobox/log/formater"
-	"andals/gobox/log/level"
-	logWriter "andals/gobox/log/writer"
 	"sync"
 	"testing"
 	"time"
 )
 
 func TestSimpleLogger(t *testing.T) {
-	path := "/tmp/test.log"
+	logger, _ := NewSyncSimpleFileLogger("/tmp/test_simple_logger.log", LEVEL_INFO)
 
-	w, _ := logWriter.NewFileWriter(path)
-	writer := logWriter.NewBufferWriter(w, 1024)
-
-	logger, _ := NewSimpleLogger(writer, level.LEVEL_INFO, new(formater.Simple))
 	msg := []byte("test simple logger")
+
+	testLogger(logger, msg)
+	logger.Free()
+}
+
+func TestSimpleBufferLogger(t *testing.T) {
+	logger, _ := NewSyncSimpleBufferFileLogger("/tmp/test_simple_buffer_logger.log", 1024, LEVEL_INFO, time.Second*1)
+
+	msg := []byte("test simple buffer logger")
 
 	testLogger(logger, msg)
 	logger.Free()
@@ -30,8 +32,8 @@ func TestAsyncLogger(t *testing.T) {
 
 	wg.Add(2)
 
-	go asyncLogger1(wg)
-	go asyncLogger2(wg)
+	go asyncSimpleLogger(wg)
+	go asyncWebLogger(wg)
 
 	wg.Wait()
 
@@ -49,33 +51,23 @@ func testLogger(logger ILogger, msg []byte) {
 	logger.Emergency(msg)
 }
 
-func asyncLogger1(wg *sync.WaitGroup) {
+func asyncSimpleLogger(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	path := "/tmp/test_a1.log"
+	logger, _ := NewAsyncSimpleBufferFileLogger("/tmp/test_async_simple_logger.log", 1024, LEVEL_INFO, 10, time.Second*2)
 
-	w, _ := logWriter.NewFileWriter(path)
-	writer, _ := logWriter.NewBufferWriterWithTimeFlush(w, 1024, time.Second*2)
-
-	l, _ := NewSimpleLogger(writer, level.LEVEL_INFO, new(formater.Simple))
-	logger, _ := NewAsyncLogger(l, 10)
-	msg := []byte("test async1 logger")
+	msg := []byte("test async simple logger")
 
 	testLogger(logger, msg)
 	time.Sleep(time.Second * 3)
 	testLogger(logger, msg)
 }
 
-func asyncLogger2(wg *sync.WaitGroup) {
+func asyncWebLogger(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	path := "/tmp/test_a2.log"
+	logger, _ := NewAsyncSimpleWebBufferFileLogger("/tmp/test_async_web_logger.log", "async_web", 1024, LEVEL_INFO, 10, time.Second*2)
 
-	w, _ := logWriter.NewFileWriter(path)
-	writer, _ := logWriter.NewBufferWriterWithTimeFlush(w, 1024, time.Second*2)
-
-	l, _ := NewSimpleLogger(writer, level.LEVEL_INFO, new(formater.Simple))
-	logger, _ := NewAsyncLogger(l, 10)
 	msg := []byte("test async2 logger")
 
 	testLogger(logger, msg)
