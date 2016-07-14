@@ -55,14 +55,6 @@ func TestDirExist(t *testing.T) {
 	}
 }
 
-func TestMd5(t *testing.T) {
-	PrintCallerFuncNameForTest()
-
-	md5Str := Md5([]byte("abc"))
-
-	fmt.Println(md5Str)
-}
-
 func TestAppendBytes(t *testing.T) {
 	PrintCallerFuncNameForTest()
 

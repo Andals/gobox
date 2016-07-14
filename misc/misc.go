@@ -10,7 +10,6 @@ package misc
 import (
 	"andals/gobox/color"
 	"bytes"
-	"crypto/md5"
 	"fmt"
 	"os"
 	"runtime"
@@ -65,10 +64,6 @@ func DirExist(path string) bool {
 		return true
 	}
 	return false
-}
-
-func Md5(data []byte) string {
-	return fmt.Sprintf("%x", md5.Sum(data))
 }
 
 func PrintCallerFuncNameForTest() {
