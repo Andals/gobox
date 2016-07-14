@@ -1,8 +1,8 @@
 package controller
 
 import (
-	//     "fmt"
 	"encoding/base64"
+	//     "fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -20,7 +20,7 @@ type Context struct {
 	RespBody    []byte
 
 	RemoteRealAddr *RemoteAddr
-	Rid            string
+	Rid            []byte
 }
 
 func NewContext(r *http.Request, w http.ResponseWriter, remoteRealAddr *RemoteAddr) *Context {
@@ -39,7 +39,8 @@ func NewContext(r *http.Request, w http.ResponseWriter, remoteRealAddr *RemoteAd
 	randInt := misc.RandByTime(&now)
 
 	ridStr := this.RemoteRealAddr.String() + "," + strconv.FormatInt(timeInt, 10) + "," + strconv.FormatInt(randInt, 10)
-	this.Rid = base64.StdEncoding.EncodeToString([]byte(ridStr))
+	this.Rid = make([]byte, base64.StdEncoding.EncodedLen(len(ridStr)))
+	base64.StdEncoding.Encode(this.Rid, []byte(ridStr))
 
 	return this
 }
