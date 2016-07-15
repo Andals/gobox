@@ -1,13 +1,13 @@
 package controller
 
 import (
-	"encoding/base64"
 	//     "fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
 
+	"andals/gobox/encoding"
 	"andals/gobox/misc"
 )
 
@@ -39,8 +39,7 @@ func NewContext(r *http.Request, w http.ResponseWriter, remoteRealAddr *RemoteAd
 	randInt := misc.RandByTime(&now)
 
 	ridStr := this.RemoteRealAddr.String() + "," + strconv.FormatInt(timeInt, 10) + "," + strconv.FormatInt(randInt, 10)
-	this.Rid = make([]byte, base64.StdEncoding.EncodedLen(len(ridStr)))
-	base64.StdEncoding.Encode(this.Rid, []byte(ridStr))
+	this.Rid = encoding.Base64Encode([]byte(ridStr))
 
 	return this
 }
