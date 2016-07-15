@@ -18,7 +18,7 @@ func TestSimpleFormater(t *testing.T) {
 func TestWebFormater(t *testing.T) {
 	misc.PrintCallerFuncNameForTest()
 
-	f := NewWebFormater("xyz")
+	f := NewWebFormater([]byte("xyz"))
 
 	b := f.Format(LEVEL_EMERGENCY, []byte("abc"))
 	t.Log(string(b))

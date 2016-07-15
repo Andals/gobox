@@ -66,7 +66,7 @@ func asyncSimpleLogger(wg *sync.WaitGroup) {
 func asyncWebLogger(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	logger, _ := NewAsyncSimpleWebBufferFileLogger("/tmp/test_async_web_logger.log", "async_web", 1024, LEVEL_INFO, 10, time.Second*2)
+	logger, _ := NewAsyncSimpleWebBufferFileLogger("/tmp/test_async_web_logger.log", []byte("async_web"), 1024, LEVEL_INFO, 10, time.Second*2)
 
 	msg := []byte("test async2 logger")
 

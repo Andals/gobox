@@ -48,7 +48,7 @@ func NewAsyncSimpleBufferFileLogger(path string, bufsize, level, queueLen int, t
 	return NewAsyncLogger(l, queueLen)
 }
 
-func NewAsyncSimpleWebBufferFileLogger(path, logId string, bufsize, level, queueLen int, timeInterval time.Duration) (ILogger, error) {
+func NewAsyncSimpleWebBufferFileLogger(path string, logId []byte, bufsize, level, queueLen int, timeInterval time.Duration) (ILogger, error) {
 	w, err := logWriter.NewFileWriter(path)
 	if err != nil {
 		return nil, err

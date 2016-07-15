@@ -61,9 +61,9 @@ type WebFormater struct {
 	logId []byte
 }
 
-func NewWebFormater(logId string) *WebFormater {
+func NewWebFormater(logId []byte) *WebFormater {
 	return &WebFormater{
-		logId: []byte(logId),
+		logId: logId,
 	}
 }
 
