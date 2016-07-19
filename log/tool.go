@@ -16,7 +16,7 @@ func NewSyncSimpleBufferFileLogger(w *logWriter.File, bufsize, level int, timeIn
 	return NewSimpleLogger(writer, level, new(SimpleFormater))
 }
 
-func NewAsyncSimpleBufferFileLogger(w *logWriter.File, bufsize, level, queueLen int, timeInterval time.Duration) (ILogger, error) {
+func NewAsyncSimpleBufferFileLogger(w *logWriter.File, bufsize, level int, timeInterval time.Duration, ach asyncLogRoutineCh) (ILogger, error) {
 	writer := logWriter.NewBufferWriter(w, bufsize, timeInterval)
 
 	l, err := NewSimpleLogger(writer, level, new(SimpleFormater))
@@ -24,10 +24,10 @@ func NewAsyncSimpleBufferFileLogger(w *logWriter.File, bufsize, level, queueLen 
 		return nil, err
 	}
 
-	return NewAsyncLogger(l, queueLen)
+	return NewAsyncLogger(l, ach), nil
 }
 
-func NewAsyncSimpleWebBufferFileLogger(w *logWriter.File, logId []byte, bufsize, level, queueLen int, timeInterval time.Duration) (ILogger, error) {
+func NewAsyncSimpleWebBufferFileLogger(w *logWriter.File, logId []byte, bufsize, level int, timeInterval time.Duration, ach asyncLogRoutineCh) (ILogger, error) {
 	writer := logWriter.NewBufferWriter(w, bufsize, timeInterval)
 
 	l, err := NewSimpleLogger(writer, level, NewWebFormater(logId))
@@ -35,5 +35,5 @@ func NewAsyncSimpleWebBufferFileLogger(w *logWriter.File, logId []byte, bufsize,
 		return nil, err
 	}
 
-	return NewAsyncLogger(l, queueLen)
+	return NewAsyncLogger(l, ach), nil
 }
