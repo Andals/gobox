@@ -11,7 +11,7 @@ import (
 
 func TestSimpleLogger(t *testing.T) {
 	w, _ := logWriter.NewFileWriter("/tmp/test_simple_logger.log")
-	logger, _ := NewSimpleLogger(w, LEVEL_INFO, new(SimpleFormater))
+	logger, _ := NewSyncSimpleFileLogger(w, LEVEL_INFO)
 
 	msg := []byte("test simple logger")
 
@@ -20,11 +20,8 @@ func TestSimpleLogger(t *testing.T) {
 }
 
 func TestSimpleBufferLogger(t *testing.T) {
-	//     logger, _ := NewSyncSimpleBufferFileLogger(, 1024, LEVEL_INFO, time.Second*1)
-
 	w, _ := logWriter.NewFileWriter("/tmp/test_simple_buffer_logger.log")
-	writer := logWriter.NewBufferWriter(w, 1024, time.Second*1)
-	logger, _ := NewSimpleLogger(writer, LEVEL_INFO, new(SimpleFormater))
+	logger, _ := NewSyncSimpleBufferFileLogger(w, 1024, LEVEL_INFO, time.Second*1)
 
 	msg := []byte("test simple buffer logger")
 
@@ -62,9 +59,7 @@ func asyncSimpleLogger(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	w, _ := logWriter.NewFileWriter("/tmp/test_async_simple_logger.log")
-	writer := logWriter.NewBufferWriter(w, 1024, time.Second*2)
-	l, _ := NewSimpleLogger(writer, LEVEL_INFO, new(SimpleFormater))
-	logger, _ := NewAsyncLogger(l, 10)
+	logger, _ := NewAsyncSimpleBufferFileLogger(w, 1024, LEVEL_INFO, 10, time.Second*2)
 
 	msg := []byte("test async simple logger")
 
@@ -77,11 +72,9 @@ func asyncWebLogger(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	w, _ := logWriter.NewFileWriter("/tmp/test_async_web_logger.log")
-	writer := logWriter.NewBufferWriter(w, 1024, time.Second*2)
-	l, _ := NewSimpleLogger(writer, LEVEL_INFO, NewWebFormater([]byte("async_web")))
-	logger, _ := NewAsyncLogger(l, 10)
+	logger, _ := NewAsyncSimpleWebBufferFileLogger(w, []byte("async_web"), 1024, LEVEL_INFO, 10, time.Second*2)
 
-	msg := []byte("test async2 logger")
+	msg := []byte("test async web logger")
 
 	testLogger(logger, msg)
 }
