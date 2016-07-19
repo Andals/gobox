@@ -20,7 +20,8 @@ import (
 * @{ */
 
 type File struct {
-	path string
+	path   string
+	lockCh chan int
 
 	*os.File
 }
@@ -32,10 +33,13 @@ func NewFileWriter(path string) (*File, error) {
 	}
 
 	this := &File{
-		path: path,
+		path:   path,
+		lockCh: make(chan int, 1),
 
 		File: f,
 	}
+
+	this.lockCh <- 1
 
 	return this, nil
 }
@@ -43,10 +47,15 @@ func NewFileWriter(path string) (*File, error) {
 func (this *File) Write(msg []byte) (int, error) {
 	// file may be deleted when doing logrotate
 	if !misc.FileExist(this.path) {
+		this.Close()
 		this.File, _ = openFile(this.path)
 	}
 
-	return this.File.Write(msg)
+	<-this.lockCh
+	n, err := this.File.Write(msg)
+	this.lockCh <- 1
+
+	return n, err
 }
 
 func (this *File) Flush() error {
