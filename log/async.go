@@ -24,10 +24,10 @@ type AsyncLogRoutineCh struct {
 	freeCh  chan int
 }
 
-var asyncLogRoutineList []AsyncLogRoutineCh
+var asyncLogRoutineList []*AsyncLogRoutineCh
 
-func NewAsyncLogRoutine(queueLen int) AsyncLogRoutineCh {
-	this := AsyncLogRoutineCh{
+func NewAsyncLogRoutine(queueLen int) *AsyncLogRoutineCh {
+	this := &AsyncLogRoutineCh{
 		msgCh:   make(chan *asyncMsg, queueLen),
 		flushCh: make(chan ILogger, queueLen),
 		freeCh:  make(chan int),
@@ -48,7 +48,7 @@ func (this *AsyncLogRoutineCh) Free() {
 	close(this.freeCh)
 }
 
-func logRoutine(ach AsyncLogRoutineCh) {
+func logRoutine(ach *AsyncLogRoutineCh) {
 	for {
 		select {
 		case am, _ := <-ach.msgCh:
@@ -75,12 +75,12 @@ func logRoutine(ach AsyncLogRoutineCh) {
 type asyncLogger struct {
 	logger ILogger
 
-	ach AsyncLogRoutineCh
+	ach *AsyncLogRoutineCh
 }
 
 var asyncLoggerList []*asyncLogger
 
-func NewAsyncLogger(logger ILogger, ach AsyncLogRoutineCh) *asyncLogger {
+func NewAsyncLogger(logger ILogger, ach *AsyncLogRoutineCh) *asyncLogger {
 	this := &asyncLogger{
 		logger: logger,
 
