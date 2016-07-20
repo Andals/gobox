@@ -39,6 +39,12 @@ func NewAsyncLogRoutine(queueLen int) *AsyncLogRoutineCh {
 	return this
 }
 
+func FreeAsyncLogRoutines() {
+	for _, ach := range asyncLogRoutineList {
+		ach.Free()
+	}
+}
+
 func (this *AsyncLogRoutineCh) Free() {
 	this.freeCh <- 1
 	<-this.freeCh
@@ -78,16 +84,12 @@ type asyncLogger struct {
 	ach *AsyncLogRoutineCh
 }
 
-var asyncLoggerList []*asyncLogger
-
 func NewAsyncLogger(logger ILogger, ach *AsyncLogRoutineCh) *asyncLogger {
 	this := &asyncLogger{
 		logger: logger,
 
 		ach: ach,
 	}
-
-	asyncLoggerList = append(asyncLoggerList, this)
 
 	return this
 }
@@ -145,13 +147,3 @@ func (this *asyncLogger) Free() {
 }
 
 /**  @} */
-
-func FreeAsyncLogList() {
-	for _, ach := range asyncLogRoutineList {
-		ach.Free()
-	}
-
-	for _, al := range asyncLoggerList {
-		al.logger.Free()
-	}
-}

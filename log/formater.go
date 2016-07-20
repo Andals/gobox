@@ -62,9 +62,10 @@ type WebFormater struct {
 }
 
 func NewWebFormater(logId []byte) *WebFormater {
-	return &WebFormater{
-		logId: logId,
-	}
+	this := new(WebFormater)
+	copy(this.logId, logId)
+
+	return this
 }
 
 func (this *WebFormater) Format(level int, msg []byte) []byte {

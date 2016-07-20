@@ -10,7 +10,7 @@ import (
 )
 
 func TestAsyncLogger(t *testing.T) {
-	defer FreeAsyncLogList()
+	defer FreeAsyncLogRoutines()
 
 	wg := new(sync.WaitGroup)
 
