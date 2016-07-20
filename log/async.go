@@ -11,7 +11,7 @@ type asyncMsg struct {
 	level int
 	msg   []byte
 
-	logger ILogger
+	al *asyncLogger
 }
 
 /**
@@ -58,17 +58,26 @@ func logRoutine(ach *AsyncLogRoutineCh) {
 	for {
 		select {
 		case am, _ := <-ach.msgCh:
-			am.logger.Log(am.level, am.msg)
+			logAsyncMsg(am)
 		case logger, _ := <-ach.flushCh:
 			logger.Flush()
 		case <-ach.freeCh:
 			for len(ach.msgCh) != 0 {
 				am, _ := <-ach.msgCh
-				am.logger.Log(am.level, am.msg)
+				logAsyncMsg(am)
 			}
 			ach.freeCh <- 1
 			return
 		}
+	}
+}
+
+func logAsyncMsg(am *asyncMsg) {
+	am.al.logger.Log(am.level, am.msg)
+	am.al.msgCnt--
+
+	if am.al.msgCnt == 0 && am.al.waitFree {
+		am.al.logger.Free()
 	}
 }
 
@@ -79,16 +88,20 @@ func logRoutine(ach *AsyncLogRoutineCh) {
 * @{ */
 
 type asyncLogger struct {
-	logger ILogger
+	msgCnt   int
+	waitFree bool
 
-	ach *AsyncLogRoutineCh
+	logger ILogger
+	ach    *AsyncLogRoutineCh
 }
 
 func NewAsyncLogger(logger ILogger, ach *AsyncLogRoutineCh) *asyncLogger {
 	this := &asyncLogger{
-		logger: logger,
+		msgCnt:   0,
+		waitFree: false,
 
-		ach: ach,
+		logger: logger,
+		ach:    ach,
 	}
 
 	return this
@@ -127,12 +140,15 @@ func (this *asyncLogger) Emergency(msg []byte) {
 }
 
 func (this *asyncLogger) Log(level int, msg []byte) error {
-	this.ach.msgCh <- &asyncMsg{
+	am := &asyncMsg{
 		level: level,
 		msg:   msg,
 
-		logger: this.logger,
+		al: this,
 	}
+
+	this.msgCnt++
+	this.ach.msgCh <- am
 
 	return nil
 }
@@ -144,6 +160,7 @@ func (this *asyncLogger) Flush() error {
 }
 
 func (this *asyncLogger) Free() {
+	this.waitFree = true
 }
 
 /**  @} */
