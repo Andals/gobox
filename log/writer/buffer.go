@@ -12,16 +12,81 @@ import (
 	"time"
 )
 
+/**
+* @name buffer auto flush
+* @{ */
+
+var bufferAutoFlushControl struct {
+	enabled bool
+
+	lockCh    chan int
+	disableCh chan int
+
+	bufferList []*Buffer
+}
+
+func init() {
+	bufferAutoFlushControl.enabled = false
+	bufferAutoFlushControl.lockCh = make(chan int, 1)
+	bufferAutoFlushControl.lockCh <- 1
+	bufferAutoFlushControl.disableCh = make(chan int)
+}
+
+func EnableBufferAutoFlush(timeInterval time.Duration) {
+	if bufferAutoFlushControl.enabled || timeInterval <= 0 {
+		return
+	}
+
+	<-bufferAutoFlushControl.lockCh
+	if !bufferAutoFlushControl.enabled {
+		go bufferAutoFlushRoutine(timeInterval)
+
+		bufferAutoFlushControl.enabled = true
+	}
+
+	bufferAutoFlushControl.lockCh <- 1
+}
+
+func bufferAutoFlushRoutine(timeInterval time.Duration) {
+	for {
+		select {
+		case <-time.After(timeInterval):
+			for _, buf := range bufferAutoFlushControl.bufferList {
+				buf.Flush()
+			}
+		case <-bufferAutoFlushControl.disableCh:
+			bufferAutoFlushControl.disableCh <- 1
+			return
+		}
+	}
+}
+
+func DisableBufferAutoFlush() {
+	if !bufferAutoFlushControl.enabled {
+		return
+	}
+
+	<-bufferAutoFlushControl.lockCh
+	if bufferAutoFlushControl.enabled {
+		bufferAutoFlushControl.disableCh <- 1
+		<-bufferAutoFlushControl.disableCh
+
+		bufferAutoFlushControl.enabled = false
+	}
+
+	bufferAutoFlushControl.lockCh <- 1
+}
+
+/**  @} */
+
 type Buffer struct {
 	w   IWriter
 	buf *bufio.Writer
 
-	lockCh            chan int
-	freeCh            chan int
-	flushTimeInterval time.Duration
+	lockCh chan int
 }
 
-func NewBufferWriter(writer IWriter, bufsize int, flushTimeInterval time.Duration) *Buffer {
+func NewBufferWriter(writer IWriter, bufsize int) *Buffer {
 	this := &Buffer{
 		w:   writer,
 		buf: bufio.NewWriterSize(writer, bufsize),
@@ -30,10 +95,7 @@ func NewBufferWriter(writer IWriter, bufsize int, flushTimeInterval time.Duratio
 	}
 
 	this.lockCh <- 1
-	if flushTimeInterval > 0 {
-		this.freeCh = make(chan int)
-		go this.flushRoutine()
-	}
+	bufferAutoFlushControl.bufferList = append(bufferAutoFlushControl.bufferList, this)
 
 	return this
 }
@@ -55,27 +117,6 @@ func (this *Buffer) Flush() error {
 }
 
 func (this *Buffer) Free() {
-	if this.freeCh != nil {
-		this.freeCh <- 1
-		<-this.freeCh
-	}
-
 	this.Flush()
 	this.w.Free()
-	this.buf = nil
-}
-
-func (this *Buffer) flushRoutine() {
-	defer func() {
-		this.freeCh <- 1
-	}()
-
-	for {
-		select {
-		case <-time.After(this.flushTimeInterval):
-			this.Flush()
-		case <-this.freeCh:
-			return
-		}
-	}
 }

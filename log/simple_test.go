@@ -19,11 +19,15 @@ func TestSimpleLogger(t *testing.T) {
 }
 
 func TestSimpleBufferLogger(t *testing.T) {
+	EnableBufferAutoFlush(time.Second * 1)
+
 	w, _ := logWriter.NewFileWriter("/tmp/test_simple_buffer_logger.log")
-	logger, _ := NewSyncSimpleBufferFileLogger(w, 1024, LEVEL_INFO, time.Second*1)
+	logger, _ := NewSyncSimpleBufferFileLogger(w, 1024, LEVEL_INFO)
 
 	msg := []byte("test simple buffer logger")
 
 	testLogger(logger, msg)
 	logger.Free()
+
+	DisableBufferAutoFlush()
 }
