@@ -8,6 +8,7 @@
 package log
 
 import (
+	//     "fmt"
 	"time"
 
 	"andals/gobox/misc"
@@ -62,10 +63,9 @@ type WebFormater struct {
 }
 
 func NewWebFormater(logId []byte) *WebFormater {
-	this := new(WebFormater)
-	copy(this.logId, logId)
-
-	return this
+	return &WebFormater{
+		logId: logId[:],
+	}
 }
 
 func (this *WebFormater) Format(level int, msg []byte) []byte {
