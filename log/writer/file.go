@@ -63,7 +63,6 @@ func (this *File) Flush() error {
 }
 
 func (this *File) Free() {
-	this.Close()
 }
 
 func openFile(path string) (*os.File, error) {
