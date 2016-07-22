@@ -52,10 +52,10 @@ func TestAesEncryptDecrypt(t *testing.T) {
 	key := []byte("gobox")
 	data := []byte("abc")
 
-	crypted := AesEncrypt(key, data)
+	crypted := AesCBCEncrypt(key, data)
 	t.Log(crypted)
 
-	d := AesDecrypt(key, crypted)
+	d := AesCBCDecrypt(key, crypted)
 	t.Log(d)
 
 	if string(d) != string(data) {

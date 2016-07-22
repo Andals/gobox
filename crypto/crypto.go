@@ -14,7 +14,7 @@ func Md5(data []byte) []byte {
 	return []byte(str)
 }
 
-func AesEncrypt(key, data []byte) []byte {
+func AesCBCEncrypt(key, data []byte) []byte {
 	key = Md5(key)
 	block, _ := aes.NewCipher(key)
 	blockSize := block.BlockSize()
@@ -27,7 +27,7 @@ func AesEncrypt(key, data []byte) []byte {
 	return crypted
 }
 
-func AesDecrypt(key, crypted []byte) []byte {
+func AesCBCDecrypt(key, crypted []byte) []byte {
 	key = Md5(key)
 	block, _ := aes.NewCipher(key)
 	blockSize := block.BlockSize()
