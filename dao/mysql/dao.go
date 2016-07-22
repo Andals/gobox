@@ -16,11 +16,12 @@ const (
 )
 
 type Dao struct {
+	Sqb *SimpleQueryBuilder
+
 	db *sql.DB
 	tx *sql.Tx
 
 	logger log.ILogger
-	Sqb    *SimpleQueryBuilder
 }
 
 func DsnTcpIpV4(username, password, host, port, dbname string) string {
