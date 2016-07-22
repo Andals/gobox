@@ -9,12 +9,12 @@ import (
 func TestMd5(t *testing.T) {
 	misc.PrintCallerFuncNameForTest()
 
-	md5Str := Md5([]byte("abc"))
-	if len(md5Str) != 32 {
-		t.Error(md5Str)
+	md5 := Md5([]byte("abc"))
+	if len(md5) != 32 {
+		t.Error(string(md5))
 	}
 
-	t.Log(md5Str)
+	t.Log(string(md5))
 }
 
 func TestPKCS5Padding(t *testing.T) {

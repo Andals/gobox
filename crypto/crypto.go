@@ -8,12 +8,14 @@ import (
 	"fmt"
 )
 
-func Md5(data []byte) string {
-	return fmt.Sprintf("%x", md5.Sum(data))
+func Md5(data []byte) []byte {
+	str := fmt.Sprintf("%x", md5.Sum(data))
+
+	return []byte(str)
 }
 
 func AesEncrypt(key, data []byte) []byte {
-	key = []byte(Md5(key))
+	key = Md5(key)
 	block, _ := aes.NewCipher(key)
 	blockSize := block.BlockSize()
 	data = PKCS5Padding(data, blockSize)
@@ -26,7 +28,7 @@ func AesEncrypt(key, data []byte) []byte {
 }
 
 func AesDecrypt(key, crypted []byte) []byte {
-	key = []byte(Md5(key))
+	key = Md5(key)
 	block, _ := aes.NewCipher(key)
 	blockSize := block.BlockSize()
 
