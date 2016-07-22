@@ -1,3 +1,3 @@
 # gobox
 
-golang's toolbox
+[wiki](https://github.com/Andals/gobox/wiki)
