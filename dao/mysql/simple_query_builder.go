@@ -95,10 +95,10 @@ func (this *SimpleQueryBuilder) Set(setItems ...*ColQueryItem) *SimpleQueryBuild
 	this.query += " SET "
 	for i := 0; i < l; i++ {
 		this.query += setItems[i].Name + " = ?, "
-		this.args = append(this.args, setItems[i].Values...)
+		this.args = append(this.args, setItems[i].Values[0])
 	}
 	this.query += setItems[l].Name + " = ? "
-	this.args = append(this.args, setItems[l].Values...)
+	this.args = append(this.args, setItems[l].Values[0])
 
 	return this
 }
@@ -220,21 +220,21 @@ func (this *SimpleQueryBuilder) buildCondition(condItem *ColQueryItem) {
 	switch condItem.Condition {
 	case COND_EQUAL, COND_NOT_EQUAL, COND_LESS, COND_LESS_EQUAL, COND_GREATER, COND_GREATER_EQUAL:
 		this.query += condItem.Name + " " + condItem.Condition + " ?"
-		this.args = append(this.args, condItem.Values...)
+		this.args = append(this.args, condItem.Values[0])
 	case COND_IN:
 		this.buildConditionInOrNotIn(condItem, "IN")
 	case COND_NOT_IN:
 		this.buildConditionInOrNotIn(condItem, "NOT IN")
 	case COND_LIKE:
 		this.query += condItem.Name + " LIKE ?"
-		this.args = append(this.args, condItem.Values...)
+		this.args = append(this.args, condItem.Values[0])
 	case COND_BETWEEN:
 		if len(condItem.Values) != 2 {
 			return
 		}
 
 		this.query += condItem.Name + " BETWEEN ? AND ?"
-		this.args = append(this.args, condItem.Values...)
+		this.args = append(this.args, condItem.Values[0], condItem.Values[1])
 	}
 }
 

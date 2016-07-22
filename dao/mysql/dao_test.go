@@ -26,7 +26,7 @@ func init() {
 	path := "/tmp/test_mysql.log"
 
 	w, _ := writer.NewFileWriter(path)
-	logger, _ := log.NewSimpleLogger(w, log.LEVEL_INFO)
+	logger, _ := log.NewSimpleLogger(w, log.LEVEL_INFO, new(log.SimpleFormater))
 
 	dao, _ = NewDao(dsn, logger)
 }
