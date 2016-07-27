@@ -1,3 +1,3 @@
 # gobox
 
-[wiki](https://github.com/Andals/gobox/wiki)
+[doc](http://gobox.readthedocs.io/en/latest/)
