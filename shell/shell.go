@@ -14,11 +14,13 @@ import (
 	"os/user"
 	"strconv"
 	"strings"
+
+	"andals/gobox/misc"
 )
 
 type ShellResult struct {
 	Ok     bool
-	Output string
+	Output []byte
 }
 
 func NewCmd(cmdStr string) *exec.Cmd {
@@ -27,17 +29,17 @@ func NewCmd(cmdStr string) *exec.Cmd {
 
 func RunCmd(cmdStr string) *ShellResult {
 	result := &ShellResult{
-		Ok:     true,
-		Output: "",
+		Ok: true,
 	}
 
-	cmd := NewCmd(cmdStr)
-	output, err := cmd.CombinedOutput()
-	result.Output = string(output)
+	var err error
 
-	if nil != err {
+	cmd := NewCmd(cmdStr)
+	result.Output, err = cmd.CombinedOutput()
+
+	if err != nil {
 		result.Ok = false
-		result.Output += err.Error()
+		result.Output = misc.AppendBytes(result.Output, []byte(err.Error()))
 	}
 	return result
 }

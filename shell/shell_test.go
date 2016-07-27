@@ -7,12 +7,12 @@ import (
 
 func TestRunCmd(t *testing.T) {
 	result := RunCmd("ls -l")
-	fmt.Println(result)
+	fmt.Println(result.Ok, string(result.Output))
 }
 
 func TestRunAsUser(t *testing.T) {
 	result := RunAsUser("ls -l", "root")
-	fmt.Println(result)
+	fmt.Println(result.Ok, string(result.Output))
 }
 
 func TestRsync(t *testing.T) {
@@ -22,5 +22,5 @@ func TestRsync(t *testing.T) {
 	sshUser := "ligang"
 
 	result := Rsync(host, sou, dst, "", sshUser, 3)
-	fmt.Println(result)
+	fmt.Println(result.Ok, string(result.Output))
 }

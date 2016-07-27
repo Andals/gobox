@@ -11,9 +11,11 @@ import (
 func TestClientGet(t *testing.T) {
 	path := "/tmp/test_http_client.log"
 	w, _ := logWriter.NewFileWriter(path)
-	logger, _ := log.NewSimpleLogger(w, log.LEVEL_INFO)
+	logger, _ := log.NewSimpleLogger(w, log.LEVEL_INFO, nil)
 
-	client := NewClient(logger).SetTimeout(time.Second * 3).SetMaxIdleConnsPerHost(10)
+	client := NewClient(logger).
+		SetTimeout(time.Second * 3).
+		SetMaxIdleConnsPerHost(10)
 	extHeaders := map[string]string{
 		"GO-CLIENT-1": "gobox-httpclient-1",
 		"GO-CLIENT-2": "gobox-httpclient-2",
