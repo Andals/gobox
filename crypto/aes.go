@@ -7,6 +7,10 @@ import (
 	"strconv"
 )
 
+const (
+	AES_BLOCK_SIZE = 16
+)
+
 type AesCBCCrypter struct {
 	blockSize int
 
