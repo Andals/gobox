@@ -79,9 +79,10 @@ type kvItem struct {
 func (this *ShardMap) Walk(wf func(k string, v interface{})) {
 	for _, si := range this.shards {
 		kvCh := make(chan *kvItem)
-		si.RLock()
-
+		
 		go func() {
+			si.RLock()
+
 			for k, v := range si.data {
 				si.RUnlock()
 				kvCh <- &kvItem{
