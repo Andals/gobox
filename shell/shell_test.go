@@ -1,26 +1,60 @@
 package shell
 
 import (
-	"fmt"
+	"os/user"
+	"strings"
 	"testing"
 )
 
 func TestRunCmd(t *testing.T) {
-	result := RunCmd("ls -l")
-	fmt.Println(result.Ok, string(result.Output))
+	cmd := "ls -l"
+
+	result := RunCmd(cmd)
+	if !result.Ok {
+		t.Errorf("run command failed, command: %s", cmd)
+	}
+
+	if string(result.Output) == "" {
+		t.Errorf("run command return empty, command: %s", cmd)
+	}
 }
 
 func TestRunAsUser(t *testing.T) {
-	result := RunAsUser("ls -l", "root")
-	fmt.Println(result.Ok, string(result.Output))
+	cmd := "ls -l"
+	user := "root"
+
+	result := RunAsUser(cmd, user)
+	if !result.Ok {
+		t.Errorf("run command as %s failed, command: %s", user, cmd)
+	}
+
+	if string(result.Output) == "" {
+		t.Errorf("run commandas %s return empty, command: %s", user, cmd)
+	}
 }
 
 func TestRsync(t *testing.T) {
-	host := "10.16.57.92"
-	sou := "/home/ligang/tmp/go/*"
-	dst := "/home/ligang/tmp/go"
-	sshUser := "ligang"
 
-	result := Rsync(host, sou, dst, "", sshUser, 3)
-	fmt.Println(result.Ok, string(result.Output))
+	host := ""
+	sou := "./tmp/rsync/sou/"
+	dst := "./tmp/rsync/dst/"
+	file := "rsync.txt"
+
+	cmd := "mkdir -p " + sou + "; mkdir -p " + dst + "; /bin/echo 'rsync sou' > " + sou + file
+	result := RunCmd(cmd)
+	if !result.Ok {
+		t.Fatalf("run command failed, command: %s", cmd)
+	}
+
+	currentUser, _ := user.Current()
+	sshUser := currentUser.Username
+
+	result = Rsync(host, sou, dst, "", sshUser, 3)
+	if !result.Ok {
+		t.Errorf("rsync failed")
+	}
+
+	if strings.Index(string(result.Output), file) == -1 {
+		t.Errorf("rsync file %s failed", file)
+	}
 }
