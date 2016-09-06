@@ -8,7 +8,7 @@
 package shell
 
 import (
-	//     "fmt"
+	"fmt"
 	"os"
 	"os/exec"
 	"os/user"
@@ -54,19 +54,24 @@ func RunCmdBindTerminal(cmdStr string) {
 }
 
 func RunAsUser(cmdStr string, username string) *ShellResult {
-	var cmd string
-
 	curUser, _ := user.Current()
-	if "root" == curUser.Username {
-		cmd += "/sbin/runuser " + username + " -c \""
-		cmd += strings.Replace(cmdStr, "\"", "\\\"", -1)
-		cmd += "\""
-	} else {
-		cmd += "sudo -u " + username + " "
-		cmd += cmdStr
+	if username != "" && username != curUser.Username {
+		if curUser.Username == "root" {
+			cmdStr = fmt.Sprintf(
+				"/sbin/runuser %s -c \"%s\"",
+				username,
+				strings.Replace(cmdStr, "\"", "\\\"", -1),
+			)
+		} else {
+			cmdStr = fmt.Sprintf(
+				"sudo -u %s %s",
+				username,
+				cmdStr,
+			)
+		}
 	}
 
-	return RunCmd(cmd)
+	return RunCmd(cmdStr)
 }
 
 func Rsync(host string, sou string, dst string, excludeFrom string, sshUser string, timeout int) *ShellResult {
@@ -82,7 +87,10 @@ func MakeRsyncCmd(host string, sou string, dst string, excludeFrom string, timeo
 	if nil == err {
 		rsyncCmd += "--exclude-from='" + excludeFrom + "' "
 	}
-	rsyncCmd += sou + " " + host + ":" + dst + " 2>&1"
+	if host != "" {
+		host += ":"
+	}
+	rsyncCmd += sou + " " + host + dst + " 2>&1"
 
 	return rsyncCmd
 }
