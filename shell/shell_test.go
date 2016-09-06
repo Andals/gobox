@@ -58,3 +58,22 @@ func TestRsync(t *testing.T) {
 		t.Errorf("rsync file %s failed", file)
 	}
 }
+
+func TestGetParamsFromShell(t *testing.T) {
+	shell := "testdata/params.sh"
+	paramMap := map[string]string{
+		"user_name": "user_name",
+		"nick_name": "nick_name",
+		"user_sex":  "sex",
+	}
+	params := GetParamsFromShell(shell, paramMap)
+	if len(params) != len(paramMap) {
+		t.Errorf("params count from shell error, experct %d, got %d", len(paramMap), len(params))
+	}
+
+	experctUserName := "zhangsan"
+	userName := params["user_name"]
+	if userName != experctUserName {
+		t.Errorf("params userName from shell error, experct %s, got %s", experctUserName, userName)
+	}
+}
