@@ -68,12 +68,12 @@ func TestGetParamsFromShell(t *testing.T) {
 	}
 	params := GetParamsFromShell(shell, paramMap)
 	if len(params) != len(paramMap) {
-		t.Errorf("params count from shell error, experct %d, got %d", len(paramMap), len(params))
+		t.Errorf("params count from shell error, expect %d, got %d", len(paramMap), len(params))
 	}
 
-	experctUserName := "zhangsan"
+	expectUserName := "zhangsan"
 	userName := params["user_name"]
-	if userName != experctUserName {
-		t.Errorf("params userName from shell error, experct %s, got %s", experctUserName, userName)
+	if userName != expectUserName {
+		t.Errorf("params userName from shell error, expect %s, got %s", expectUserName, userName)
 	}
 }
