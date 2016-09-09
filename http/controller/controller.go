@@ -36,7 +36,7 @@ type Controller struct {
 		actionSlice []ActionFunc
 	}
 
-	error404Func JumpFunc
+	missActionFunc JumpFunc
 
 	//eg, access by nginx's proxy_pass
 	remoteRealIpHeaderKey   string
@@ -79,8 +79,8 @@ func (this *Controller) AddAfterAction(pattern string, af ActionFunc) {
 	this.afterActionMatches.actionSlice = append(this.afterActionMatches.actionSlice, af)
 }
 
-func (this *Controller) SetError404Func(jf JumpFunc) {
-	this.error404Func = jf
+func (this *Controller) SetMissActionFunc(jf JumpFunc) {
+	this.missActionFunc = jf
 }
 
 func (this *Controller) SetRemoteRealIpHeaderKey(key string) {
@@ -113,11 +113,11 @@ func (this *Controller) dispatch(context *Context) {
 
 	af, args := this.findActionFunc(context.Req)
 	if af == nil {
-		if this.error404Func == nil {
-			this.error404Func = error404
+		if this.missActionFunc == nil {
+			this.missActionFunc = error404
 		}
 
-		LongJump(this.error404Func)
+		LongJump(this.missActionFunc)
 	}
 
 	baf, bargs := this.findBeforeActionFunc(context.Req)
