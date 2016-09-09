@@ -12,6 +12,13 @@ const (
 )
 
 type ActionFunc func(context *Context, args []string)
+type JumpFunc func(context *Context, args ...interface{})
+
+type jumpItem struct {
+	jf JumpFunc
+
+	args []interface{}
+}
 
 type Controller struct {
 	exactMatches map[string]ActionFunc
@@ -28,6 +35,8 @@ type Controller struct {
 		regexSlice  []*regexp.Regexp
 		actionSlice []ActionFunc
 	}
+
+	error404Func JumpFunc
 
 	//eg, access by nginx's proxy_pass
 	remoteRealIpHeaderKey   string
@@ -70,6 +79,10 @@ func (this *Controller) AddAfterAction(pattern string, af ActionFunc) {
 	this.afterActionMatches.actionSlice = append(this.afterActionMatches.actionSlice, af)
 }
 
+func (this *Controller) SetError404Func(jf JumpFunc) {
+	this.error404Func = jf
+}
+
 func (this *Controller) SetRemoteRealIpHeaderKey(key string) {
 	this.remoteRealIpHeaderKey = key
 }
@@ -79,21 +92,40 @@ func (this *Controller) SetRemoteRealPortHeaderKey(key string) {
 }
 
 func (this *Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	af, args := this.findActionFunc(r)
+	context := NewContext(r, w, ParseRemoteAddr(r, this.remoteRealIpHeaderKey, this.remoteRealPortHeaderKey))
+
+	this.dispatch(context)
+
+	context.RespWriter.Write(context.RespBody)
+}
+
+func (this *Controller) dispatch(context *Context) {
+	defer func() {
+		if e := recover(); e != nil {
+			ji, ok := e.(*jumpItem)
+			if ok {
+				ji.jf(context, ji.args...)
+				return
+			}
+			panic(e)
+		}
+	}()
+
+	af, args := this.findActionFunc(context.Req)
 	if af == nil {
-		http.NotFound(w, r)
-		return
+		if this.error404Func == nil {
+			this.error404Func = error404
+		}
+
+		LongJump(this.error404Func)
 	}
 
-	context := NewContext(r, w, ParseRemoteAddr(r, this.remoteRealIpHeaderKey, this.remoteRealPortHeaderKey))
-	baf, bargs := this.findBeforeActionFunc(r)
-	aaf, aargs := this.findAfterActionFunc(r)
+	baf, bargs := this.findBeforeActionFunc(context.Req)
+	aaf, aargs := this.findAfterActionFunc(context.Req)
 
 	baf(context, bargs)
 	af(context, args)
 	aaf(context, aargs)
-
-	context.RespWriter.Write(context.RespBody)
 }
 
 func (this *Controller) findActionFunc(r *http.Request) (ActionFunc, []string) {
@@ -144,4 +176,25 @@ func NoopBeforeAction(context *Context, args []string) {
 }
 
 func NoopAfterAction(context *Context, args []string) {
+}
+
+func LongJump(jf JumpFunc, args ...interface{}) {
+	ji := &jumpItem{
+		jf:   jf,
+		args: args,
+	}
+
+	panic(ji)
+}
+
+func Redirect302(url string) {
+	LongJump(redirect302, url)
+}
+
+func error404(context *Context, args ...interface{}) {
+	http.NotFound(context.RespWriter, context.Req)
+}
+
+func redirect302(context *Context, args ...interface{}) {
+	http.Redirect(context.RespWriter, context.Req, args[0].(string), 302)
 }

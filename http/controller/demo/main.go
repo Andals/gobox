@@ -15,6 +15,8 @@ func main() {
 	cl.AddExactMatchAction("/exact", exactAction)
 	cl.AddRegexMatchAction("^/[a-z]+([0-9]+)", regexAction)
 
+	cl.AddExactMatchAction("/redirect", redirectAction)
+
 	gracehttp.ListenAndServe(":8001", cl)
 }
 
@@ -32,4 +34,8 @@ func regexAction(context *controller.Context, args []string) {
 
 func afterAction(context *controller.Context, args []string) {
 	context.RespBody = misc.AppendBytes(context.RespBody, []byte("after "+args[0]+"\n"))
+}
+
+func redirectAction(context *controller.Context, args []string) {
+	controller.Redirect302("http://www.gobox.com")
 }
