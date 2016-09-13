@@ -95,22 +95,25 @@ func MakeRsyncCmd(host string, sou string, dst string, excludeFrom string, timeo
 	return rsyncCmd
 }
 
-//paramMap := map[string]string{
-//	 "param_key" : "map_key"
+//keyMap := map[string]string{
+//	 "param_key" : "shell_key"
 //}
-func GetParamsFromShell(shell string, paramMap map[string]string) map[string]string {
-	type pmk struct {
+func GetParamsFromShell(shell string, keyMap map[string]string) map[string]string {
+	type psk struct {
 		paramKey string
-		mapKey   string
+		shellKey string
 	}
-	pmkl := []pmk{}
-	for p, m := range paramMap {
-		pmkl = append(pmkl, pmk{p, m})
+
+	pskl := make([]*psk, len(keyMap))
+	i := 0
+	for pk, sk := range keyMap {
+		pskl[i] = &psk{pk, sk}
+		i++
 	}
 
 	cmd := "source " + shell + "; "
-	for _, v := range pmkl {
-		cmd += "echo $" + v.mapKey + "; "
+	for _, v := range pskl {
+		cmd += "echo $" + v.shellKey + "; "
 	}
 
 	params := map[string]string{}
@@ -120,10 +123,10 @@ func GetParamsFromShell(shell string, paramMap map[string]string) map[string]str
 	}
 
 	output := strings.Split(string(result.Output), "\n")
-	i := 0
-	for _, v := range pmkl {
-		params[v.paramKey] = output[i]
-		i++
+	j := 0
+	for _, v := range pskl {
+		params[v.paramKey] = output[j]
+		j++
 	}
 
 	return params
