@@ -47,6 +47,9 @@ func (this *SimpleFormater) Format(level int, msg []byte) []byte {
 		[]byte("["),
 		[]byte(lm),
 		[]byte("]\t"),
+		[]byte("["),
+		[]byte(time.Now().Format(misc.TimeGeneralLayout())),
+		[]byte("]\t"),
 		msg,
 		[]byte("\n"),
 	)
