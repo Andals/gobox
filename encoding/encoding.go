@@ -13,7 +13,7 @@ func Base64Encode(data []byte) []byte {
 
 func Base64Decode(coded []byte) []byte {
 	data := make([]byte, base64.StdEncoding.DecodedLen(len(coded)))
-	base64.StdEncoding.Decode(data, coded)
+	n, _ := base64.StdEncoding.Decode(data, coded)
 
-	return data
+	return data[:n]
 }
