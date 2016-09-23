@@ -63,11 +63,13 @@ func (this *SimpleFormater) Format(level int, msg []byte) []byte {
 
 type WebFormater struct {
 	logId []byte
+	ip    []byte
 }
 
-func NewWebFormater(logId []byte) *WebFormater {
+func NewWebFormater(logId, ip []byte) *WebFormater {
 	return &WebFormater{
 		logId: logId[:],
+		ip:    ip[:],
 	}
 }
 
@@ -84,6 +86,8 @@ func (this *WebFormater) Format(level int, msg []byte) []byte {
 		[]byte("["),
 		[]byte(time.Now().Format(misc.TimeGeneralLayout())),
 		[]byte("]\t"),
+		this.ip,
+		[]byte("\t"),
 		this.logId,
 		[]byte("\t"),
 		msg,

@@ -46,7 +46,7 @@ func asyncWebLogger(wg *sync.WaitGroup) {
 
 	fw, _ := writer.NewFileWriter("/tmp/test_async_web_logger.log")
 	bw := buffer.NewBuffer(fw, 1024)
-	sl, _ := NewSimpleLogger(bw, LEVEL_INFO, NewWebFormater([]byte("async_web")))
+	sl, _ := NewSimpleLogger(bw, LEVEL_INFO, NewWebFormater([]byte("async_web"), []byte("127.0.0.1")))
 	logger := NewAsyncLogger(sl, NewAsyncLogRoutine(10))
 
 	msg := []byte("test async web logger")

@@ -3,16 +3,12 @@ package controller
 import (
 	//     "fmt"
 	"net/http"
-	"regexp"
 )
 
 const (
 	DEF_REMOTE_REAL_IP_HEADER_KEY   = "REMOTE-REAL-IP"
 	DEF_REMOTE_REAL_PORT_HEADER_KEY = "REMOTE-REAL-PORT"
 )
-
-type ActionFunc func(context *Context, args []string)
-type JumpFunc func(context *Context, args ...interface{})
 
 type jumpItem struct {
 	jf JumpFunc
@@ -21,20 +17,10 @@ type jumpItem struct {
 }
 
 type Controller struct {
-	exactMatches map[string]ActionFunc
-	regexMatches struct {
-		regexSlice  []*regexp.Regexp
-		actionSlice []ActionFunc
-	}
-
-	beforeActionMatches struct {
-		regexSlice  []*regexp.Regexp
-		actionSlice []ActionFunc
-	}
-	afterActionMatches struct {
-		regexSlice  []*regexp.Regexp
-		actionSlice []ActionFunc
-	}
+	actionMatches       *funcMatches
+	beforeActionMatches *funcMatches
+	afterActionMatches  *funcMatches
+	destructFuncMatches *funcMatches
 
 	missActionFunc JumpFunc
 
@@ -44,57 +30,72 @@ type Controller struct {
 }
 
 func NewController() *Controller {
-	this := new(Controller)
+	return &Controller{
+		actionMatches:       newFuncMatches(nil),
+		beforeActionMatches: newFuncMatches(ActionFunc(NoopAction)),
+		afterActionMatches:  newFuncMatches(ActionFunc(NoopAction)),
+		destructFuncMatches: newFuncMatches(DestructFunc(NoopDestruct)),
 
-	this.exactMatches = make(map[string]ActionFunc)
+		remoteRealIpHeaderKey:   DEF_REMOTE_REAL_IP_HEADER_KEY,
+		remoteRealPortHeaderKey: DEF_REMOTE_REAL_PORT_HEADER_KEY,
+	}
+}
 
-	this.remoteRealIpHeaderKey = DEF_REMOTE_REAL_IP_HEADER_KEY
-	this.remoteRealPortHeaderKey = DEF_REMOTE_REAL_PORT_HEADER_KEY
+func (this *Controller) AddExactMatchAction(key string, f ActionFunc) *Controller {
+	this.actionMatches.addExactFunc(key, f)
 
 	return this
 }
 
-func (this *Controller) AddExactMatchAction(pattern string, af ActionFunc) {
-	this.exactMatches[pattern] = af
+func (this *Controller) AddRegexMatchAction(pattern string, f ActionFunc) *Controller {
+	this.actionMatches.addRegexFunc(pattern, f)
+
+	return this
 }
 
-func (this *Controller) AddRegexMatchAction(pattern string, af ActionFunc) {
-	regex := regexp.MustCompile(pattern)
+func (this *Controller) AddBeforeAction(pattern string, f ActionFunc) *Controller {
+	this.beforeActionMatches.addRegexFunc(pattern, f)
 
-	this.regexMatches.regexSlice = append(this.regexMatches.regexSlice, regex)
-	this.regexMatches.actionSlice = append(this.regexMatches.actionSlice, af)
+	return this
 }
 
-func (this *Controller) AddBeforeAction(pattern string, af ActionFunc) {
-	regex := regexp.MustCompile(pattern)
+func (this *Controller) AddAfterAction(pattern string, f ActionFunc) *Controller {
+	this.afterActionMatches.addRegexFunc(pattern, f)
 
-	this.beforeActionMatches.regexSlice = append(this.beforeActionMatches.regexSlice, regex)
-	this.beforeActionMatches.actionSlice = append(this.beforeActionMatches.actionSlice, af)
+	return this
 }
 
-func (this *Controller) AddAfterAction(pattern string, af ActionFunc) {
-	regex := regexp.MustCompile(pattern)
+func (this *Controller) AddDestructFunc(pattern string, f DestructFunc) *Controller {
+	this.destructFuncMatches.addRegexFunc(pattern, f)
 
-	this.afterActionMatches.regexSlice = append(this.afterActionMatches.regexSlice, regex)
-	this.afterActionMatches.actionSlice = append(this.afterActionMatches.actionSlice, af)
+	return this
 }
 
-func (this *Controller) SetMissActionFunc(jf JumpFunc) {
-	this.missActionFunc = jf
+func (this *Controller) SetMissActionFunc(f JumpFunc) *Controller {
+	this.missActionFunc = f
+
+	return this
 }
 
-func (this *Controller) SetRemoteRealIpHeaderKey(key string) {
+func (this *Controller) SetRemoteRealIpHeaderKey(key string) *Controller {
 	this.remoteRealIpHeaderKey = key
+
+	return this
 }
 
-func (this *Controller) SetRemoteRealPortHeaderKey(key string) {
+func (this *Controller) SetRemoteRealPortHeaderKey(key string) *Controller {
 	this.remoteRealPortHeaderKey = key
+
+	return this
 }
 
 func (this *Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	context := NewContext(r, w, ParseRemoteAddr(r, this.remoteRealIpHeaderKey, this.remoteRealPortHeaderKey))
 
 	this.dispatch(context)
+
+	df, dargs := this.findDestructFunc(context.Req)
+	df(context.TransData, dargs)
 
 	context.RespWriter.Write(context.RespBody)
 }
@@ -129,53 +130,27 @@ func (this *Controller) dispatch(context *Context) {
 }
 
 func (this *Controller) findActionFunc(r *http.Request) (ActionFunc, []string) {
-	path := r.URL.Path
+	f, args := this.actionMatches.findFunc(r)
 
-	af, ok := this.exactMatches[path]
-	if ok {
-		return af, nil
-	}
-
-	for i, regex := range this.regexMatches.regexSlice {
-		matches := regex.FindStringSubmatch(path)
-		if matches != nil {
-			return this.regexMatches.actionSlice[i], matches[1:]
-		}
-	}
-
-	return nil, nil
+	return f.(ActionFunc), args
 }
 
 func (this *Controller) findBeforeActionFunc(r *http.Request) (ActionFunc, []string) {
-	path := r.URL.Path
+	f, args := this.beforeActionMatches.findFunc(r)
 
-	for i, regex := range this.beforeActionMatches.regexSlice {
-		matches := regex.FindStringSubmatch(path)
-		if matches != nil {
-			return this.beforeActionMatches.actionSlice[i], matches[1:]
-		}
-	}
-
-	return NoopBeforeAction, nil
+	return f.(ActionFunc), args
 }
 
 func (this *Controller) findAfterActionFunc(r *http.Request) (ActionFunc, []string) {
-	path := r.URL.Path
+	f, args := this.afterActionMatches.findFunc(r)
 
-	for i, regex := range this.afterActionMatches.regexSlice {
-		matches := regex.FindStringSubmatch(path)
-		if matches != nil {
-			return this.afterActionMatches.actionSlice[i], matches[1:]
-		}
-	}
-
-	return NoopAfterAction, nil
+	return f.(ActionFunc), args
 }
 
-func NoopBeforeAction(context *Context, args []string) {
-}
+func (this *Controller) findDestructFunc(r *http.Request) (DestructFunc, []string) {
+	f, args := this.destructFuncMatches.findFunc(r)
 
-func NoopAfterAction(context *Context, args []string) {
+	return f.(DestructFunc), args
 }
 
 func LongJump(jf JumpFunc, args ...interface{}) {
@@ -191,10 +166,10 @@ func Redirect302(url string) {
 	LongJump(redirect302, url)
 }
 
-func error404(context *Context, args ...interface{}) {
-	http.NotFound(context.RespWriter, context.Req)
-}
-
 func redirect302(context *Context, args ...interface{}) {
 	http.Redirect(context.RespWriter, context.Req, args[0].(string), 302)
+}
+
+func error404(context *Context, args ...interface{}) {
+	http.NotFound(context.RespWriter, context.Req)
 }
