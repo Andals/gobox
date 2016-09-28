@@ -27,8 +27,8 @@ func (id *IpData) Load(df string) error {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		item := strings.SplitN(line, "\t", ipRangeFieldCount)
-		if len(item) != ipRangeFieldCount {
+		item := strings.SplitN(line, "\t", IP_RANGE_FIELD_COUNT)
+		if len(item) != IP_RANGE_FIELD_COUNT {
 			continue
 		}
 

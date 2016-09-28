@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	ipRangeFieldCount = 3
+	IP_RANGE_FIELD_COUNT = 3
 )
 
 var ErrorIpRangeNotFound = errors.New("ip range not found")
