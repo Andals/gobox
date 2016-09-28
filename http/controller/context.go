@@ -31,8 +31,8 @@ func NewContext(r *http.Request, w http.ResponseWriter, remoteRealAddr *RemoteAd
 		TransData:      make(map[string]interface{}),
 		RemoteRealAddr: remoteRealAddr,
 	}
-	vs := r.URL.Query()
-	this.QueryValues = &vs
+	r.ParseForm()
+	this.QueryValues = &r.Form
 
 	now := time.Now()
 	timeInt := now.UnixNano()
