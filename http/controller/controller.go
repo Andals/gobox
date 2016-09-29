@@ -131,6 +131,9 @@ func (this *Controller) dispatch(context *Context) {
 
 func (this *Controller) findActionFunc(r *http.Request) (ActionFunc, []string) {
 	f, args := this.actionMatches.findFunc(r)
+	if f == nil {
+		return nil, nil
+	}
 
 	return f.(ActionFunc), args
 }
