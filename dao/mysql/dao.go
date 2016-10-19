@@ -16,8 +16,6 @@ const (
 )
 
 type Dao struct {
-	Sqb *SimpleQueryBuilder
-
 	db *sql.DB
 	tx *sql.Tx
 
@@ -43,7 +41,6 @@ func NewDao(dsn string, logger log.ILogger) (*Dao, error) {
 		tx: nil,
 
 		logger: logger,
-		Sqb:    new(SimpleQueryBuilder),
 	}, nil
 }
 
@@ -118,36 +115,36 @@ func (this *Dao) Rollback() error {
 }
 
 func (this *Dao) Insert(tableName string, colNames []string, colsValues ...[]interface{}) (sql.Result, error) {
-	this.Sqb.
-		Insert(tableName, colNames...).
+	sqb := new(SimpleQueryBuilder)
+	sqb.Insert(tableName, colNames...).
 		Values(colsValues...)
 
-	return this.Exec(this.Sqb.Query(), this.Sqb.Args()...)
+	return this.Exec(sqb.Query(), sqb.Args()...)
 }
 
 func (this *Dao) DeleteById(tableName string, id interface{}) (sql.Result, error) {
-	this.Sqb.
-		Delete(tableName).
+	sqb := new(SimpleQueryBuilder)
+	sqb.Delete(tableName).
 		WhereConditionAnd(NewColQueryItem("id", COND_EQUAL, id))
 
-	return this.Exec(this.Sqb.Query(), this.Sqb.Args()...)
+	return this.Exec(sqb.Query(), sqb.Args()...)
 }
 
 func (this *Dao) UpdateById(tableName string, id interface{}, setItems ...*ColQueryItem) (sql.Result, error) {
-	this.Sqb.
-		Update(tableName).
+	sqb := new(SimpleQueryBuilder)
+	sqb.Update(tableName).
 		Set(setItems...).
 		WhereConditionAnd(NewColQueryItem("id", COND_EQUAL, id))
 
-	return this.Exec(this.Sqb.Query(), this.Sqb.Args()...)
+	return this.Exec(sqb.Query(), sqb.Args()...)
 }
 
 func (this *Dao) SelectById(what, tableName string, id interface{}) *sql.Row {
-	this.Sqb.
-		Select(what, tableName).
+	sqb := new(SimpleQueryBuilder)
+	sqb.Select(what, tableName).
 		WhereConditionAnd(NewColQueryItem("id", COND_EQUAL, id))
 
-	return this.QueryRow(this.Sqb.Query(), this.Sqb.Args()...)
+	return this.QueryRow(sqb.Query(), sqb.Args()...)
 }
 
 func (this *Dao) SelectByIds(what, tableName string, ids []interface{}) (*sql.Rows, error) {
@@ -156,11 +153,11 @@ func (this *Dao) SelectByIds(what, tableName string, ids []interface{}) (*sql.Ro
 		is[k] = v
 	}
 
-	this.Sqb.
-		Select(what, tableName).
+	sqb := new(SimpleQueryBuilder)
+	sqb.Select(what, tableName).
 		WhereConditionAnd(NewColQueryItem("id", COND_IN, is...))
 
-	return this.Query(this.Sqb.Query(), this.Sqb.Args()...)
+	return this.Query(sqb.Query(), sqb.Args()...)
 }
 
 func (this *Dao) logQuery(query string, args ...interface{}) {
