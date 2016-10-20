@@ -35,7 +35,6 @@ func TestRunAsUser(t *testing.T) {
 
 func TestRsync(t *testing.T) {
 
-	host := ""
 	sou := "./tmp/rsync/sou/"
 	dst := "./tmp/rsync/dst/"
 	file := "rsync.txt"
@@ -49,7 +48,7 @@ func TestRsync(t *testing.T) {
 	currentUser, _ := user.Current()
 	sshUser := currentUser.Username
 
-	result = Rsync(host, sou, dst, "", sshUser, 3)
+	result = Rsync(sou, dst, "", sshUser, 3)
 	if !result.Ok {
 		t.Errorf("rsync failed")
 	}

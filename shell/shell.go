@@ -74,23 +74,20 @@ func RunAsUser(cmdStr string, username string) *ShellResult {
 	return RunCmd(cmdStr)
 }
 
-func Rsync(host string, sou string, dst string, excludeFrom string, sshUser string, timeout int) *ShellResult {
-	rsyncCmd := MakeRsyncCmd(host, sou, dst, excludeFrom, timeout)
+func Rsync(sou string, dst string, excludeFrom string, sshUser string, timeout int) *ShellResult {
+	rsyncCmd := MakeRsyncCmd(sou, dst, excludeFrom, timeout)
 
 	return RunAsUser(rsyncCmd, sshUser)
 }
 
-func MakeRsyncCmd(host string, sou string, dst string, excludeFrom string, timeout int) string {
+func MakeRsyncCmd(sou string, dst string, excludeFrom string, timeout int) string {
 	to := strconv.Itoa(timeout)
 	rsyncCmd := "/usr/bin/rsync -av -e 'ssh -o StrictHostKeyChecking=no -o ConnectTimeout=" + to + "' --timeout=" + to + " --update "
 	_, err := os.Stat(excludeFrom)
 	if nil == err {
 		rsyncCmd += "--exclude-from='" + excludeFrom + "' "
 	}
-	if host != "" {
-		host += ":"
-	}
-	rsyncCmd += sou + " " + host + dst + " 2>&1"
+	rsyncCmd += sou + " " + dst + " 2>&1"
 
 	return rsyncCmd
 }
