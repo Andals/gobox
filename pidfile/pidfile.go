@@ -12,57 +12,54 @@ const (
 )
 
 type PidFile struct {
-	*Pid
-	*File
-
-	IsTmp      bool
-	OriginPath string
+	Pid *Pid
+	File *File
+	TmpFile *File
 }
 
-func CreatePidFile(path string) (*PidFile, error) {
-	file := NewFile(path)
-	isTmp := false
-
-	pid, err := ReadPidFromFile(file)
-	if err == nil && pid.ProcessExist() {
-		file = NewFile(path + PID_FILE_TMP_PATH_SUFFIX)
-		isTmp = true
-	}
-
-	pid = NewPid(os.Getpid())
-	if err := WritePidToFile(file, pid); err != nil {
-		return nil, err
-	}
-
+func NewPidFile(path string) *PidFile {
 	return &PidFile{
-		Pid:        pid,
-		File:       file,
-		IsTmp:      isTmp,
-		OriginPath: path,
-	}, nil
+		Pid: NewPid(os.Getpid()),
+		File: NewFile(path),
+		TmpFile: NewFile(path + PID_FILE_TMP_PATH_SUFFIX),
+	}
 }
 
-func ClearPidFile(pidfile *PidFile) error {
-	pid, err := ReadPidFromFile(NewFile(pidfile.Path))
-	if err == nil && pidfile.Id == pid.Id {
-		if err = pidfile.Remove(); err != nil {
+func (pf *PidFile) Create() error {
+	file := pf.File
+	pid, err := pf.ReadPidFromFile(file)
+	if err == nil && pid.ProcessExist() {
+		file = pf.TmpFile
+	}
+
+	if err := pf.WritePidToFile(file, pf.Pid); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (pf *PidFile) Clear() error {
+	pid, err := pf.ReadPidFromFile(pf.File)
+	tmpPid, tmpErr := pf.ReadPidFromFile(pf.TmpFile)
+	
+	if err != nil && tmpErr != nil {
+		return errors.New("clear pid error: " + err.Error() +", clear tmp pid error: "+ tmpErr.Error())
+	}
+
+	if err == nil && pf.Pid.Id == pid.Id {
+		if err = pf.File.Remove(); err != nil {
 			return err
 		}
-	}
 
-	if !pidfile.IsTmp {
-		tfile := NewFile(pidfile.Path + PID_FILE_TMP_PATH_SUFFIX)
-		tpid, err := ReadPidFromFile(tfile)
-		if err == nil && tpid.ProcessExist() {
-			if err = tfile.Rename(pidfile.Path); err != nil {
+		if tmpErr == nil {
+			if err = pf.TmpFile.Rename(pf.File.Path); err != nil {
 				return err
 			}
 		}
 	} else {
-		ofile := NewFile(pidfile.OriginPath)
-		opid, err := ReadPidFromFile(ofile)
-		if err == nil && opid.Id == pidfile.Id {
-			if err = ofile.Remove(); err != nil {
+		if tmpErr == nil && pf.Pid.Id == tmpPid.Id {
+			if err = pf.TmpFile.Remove(); err != nil {
 				return err
 			}
 		}
@@ -71,7 +68,7 @@ func ClearPidFile(pidfile *PidFile) error {
 	return nil
 }
 
-func ReadPidFromFile(file *File) (*Pid, error) {
+func (pf *PidFile) ReadPidFromFile(file *File) (*Pid, error) {
 	fb, err := file.Read()
 	if err != nil {
 		return nil, err
@@ -85,7 +82,18 @@ func ReadPidFromFile(file *File) (*Pid, error) {
 	return NewPid(id), nil
 }
 
-func WritePidToFile(file *File, pid *Pid) error {
+func (pf *PidFile)  WritePidToFile(file *File, pid *Pid) error {
 	fb := []byte(strconv.Itoa(pid.Id))
 	return file.Write(fb)
 }
+
+func CreatePidFile(path string) (*PidFile, error) {
+	pf := NewPidFile(path)
+	err := pf.Create()
+	return pf, err
+}
+
+func ClearPidFile(pf *PidFile) error {
+	return pf.Clear()
+}
+
