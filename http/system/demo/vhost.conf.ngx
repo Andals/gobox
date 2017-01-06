@@ -3,6 +3,9 @@ server {
 	server_name www.gbox.com;
     server_tokens on;
 
+    access_log logs/www.gbox.com.log;
+    error_log logs/www.gbox.com.log.err debug;
+
 	keepalive_timeout 5;
 
     location / {

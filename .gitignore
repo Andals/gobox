@@ -2,3 +2,8 @@
 *.swo
 
 tags
+
+.idea
+gobox.iml
+
+.arcconfig

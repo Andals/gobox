@@ -1,8 +1,8 @@
 package shardmap
 
 import (
-	"andals/gobox/misc"
 	"andals/gobox/crypto"
+	"andals/gobox/misc"
 
 	//"fmt"
 
@@ -55,7 +55,6 @@ func BenchmarkRW(b *testing.B) {
 		go write(key, i, wg)
 	}
 	wg.Wait()
-
 
 	for i := 0; i < b.N; i++ {
 		key := getIntMd5(i)

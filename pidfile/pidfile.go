@@ -12,15 +12,15 @@ const (
 )
 
 type PidFile struct {
-	Pid *Pid
-	File *File
+	Pid     *Pid
+	File    *File
 	TmpFile *File
 }
 
 func NewPidFile(path string) *PidFile {
 	return &PidFile{
-		Pid: NewPid(os.Getpid()),
-		File: NewFile(path),
+		Pid:     NewPid(os.Getpid()),
+		File:    NewFile(path),
 		TmpFile: NewFile(path + PID_FILE_TMP_PATH_SUFFIX),
 	}
 }
@@ -42,9 +42,9 @@ func (pf *PidFile) Create() error {
 func (pf *PidFile) Clear() error {
 	pid, err := pf.ReadPidFromFile(pf.File)
 	tmpPid, tmpErr := pf.ReadPidFromFile(pf.TmpFile)
-	
+
 	if err != nil && tmpErr != nil {
-		return errors.New("clear pid error: " + err.Error() +", clear tmp pid error: "+ tmpErr.Error())
+		return errors.New("clear pid error: " + err.Error() + ", clear tmp pid error: " + tmpErr.Error())
 	}
 
 	if err == nil && pf.Pid.Id == pid.Id {
@@ -82,7 +82,7 @@ func (pf *PidFile) ReadPidFromFile(file *File) (*Pid, error) {
 	return NewPid(id), nil
 }
 
-func (pf *PidFile)  WritePidToFile(file *File, pid *Pid) error {
+func (pf *PidFile) WritePidToFile(file *File, pid *Pid) error {
 	fb := []byte(strconv.Itoa(pid.Id))
 	return file.Write(fb)
 }
@@ -96,4 +96,3 @@ func CreatePidFile(path string) (*PidFile, error) {
 func ClearPidFile(pf *PidFile) error {
 	return pf.Clear()
 }
-
