@@ -2,14 +2,10 @@ package system
 
 import (
 	"net/http"
+	"reflect"
 
-	ghttp "andals/gobox/http"
+	"andals/gobox/http/controller"
 	"andals/gobox/http/router"
-)
-
-const (
-	DEF_REMOTE_REAL_IP_HEADER_KEY   = "REMOTE-REAL-IP"
-	DEF_REMOTE_REAL_PORT_HEADER_KEY = "REMOTE-REAL-PORT"
 )
 
 type System struct {
@@ -22,43 +18,19 @@ type System struct {
 
 func NewSystem(r router.Router) *System {
 	return &System{
-		remoteRealIpHeaderKey:   DEF_REMOTE_REAL_IP_HEADER_KEY,
-		remoteRealPortHeaderKey: DEF_REMOTE_REAL_PORT_HEADER_KEY,
-
 		router: r,
 	}
 }
 
-func (this *System) SetRemoteRealIpHeaderKey(key string) *System {
-	this.remoteRealIpHeaderKey = key
-
-	return this
-}
-
-func (this *System) SetRemoteRealPortHeaderKey(key string) *System {
-	this.remoteRealPortHeaderKey = key
-
-	return this
-}
-
 func (this *System) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	context := ghttp.NewContext(r, w, ghttp.ParseRemoteAddr(r, this.remoteRealIpHeaderKey, this.remoteRealPortHeaderKey))
-
-	this.dispatch(context)
-
-	context.RespWriter.Write(context.RespBody)
-}
-
-func (this *System) dispatch(context *ghttp.Context) {
-	r := this.router.FindRoute(context)
-	if r == nil {
-		error404(context)
+	route := this.router.FindRoute(r.URL.Path)
+	if route == nil {
+		http.NotFound(w, r)
 		return
 	}
 
-	defer func() {
-		r.Cl.Destruct(context)
-	}()
+	context := route.Cl.NewActionContext(r, w)
+
 	defer func() {
 		if e := recover(); e != nil {
 			ji, ok := e.(*jumpItem)
@@ -67,9 +39,23 @@ func (this *System) dispatch(context *ghttp.Context) {
 			}
 			ji.jf(context, ji.args...)
 		}
+
+		route.Cl.Destruct(context)
 	}()
 
-	r.Cl.BeforeAction(context)
-	r.ActionValue.Call(r.ArgsValues)
-	r.Cl.AfterAction(context)
+	route.Cl.BeforeAction(context)
+	route.ActionValue.Call(this.makeArgsValues(context, route.Args))
+	route.Cl.AfterAction(context)
+
+	w.Write(context.ResponseBody())
+}
+
+func (this *System) makeArgsValues(context controller.ActionContext, args []string) []reflect.Value {
+	argsValues := make([]reflect.Value, len(args)+1)
+	argsValues[0] = reflect.ValueOf(context)
+	for i, arg := range args {
+		argsValues[i+1] = reflect.ValueOf(arg)
+	}
+
+	return argsValues
 }

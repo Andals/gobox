@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"strings"
 
-	ghttp "andals/gobox/http"
 	"andals/gobox/http/controller"
 )
 
@@ -198,9 +197,7 @@ func (this *SimpleRouter) getActionArgsNum(actionMethod reflect.Method, controll
 	if actionMethod.Type.In(0).String() != controllerType.String() {
 		return -1
 	}
-	if actionMethod.Type.In(1).String() != "*http.Context" {
-		return -1
-	}
+
 	if n > 2 {
 		valid := true
 		for i := 2; i < n; i++ {
@@ -217,8 +214,8 @@ func (this *SimpleRouter) getActionArgsNum(actionMethod reflect.Method, controll
 	return n - 2 //delete this and context
 }
 
-func (this *SimpleRouter) FindRoute(context *ghttp.Context) *Route {
-	path := strings.ToLower(context.Req.URL.Path)
+func (this *SimpleRouter) FindRoute(path string) *Route {
+	path = strings.ToLower(path)
 
 	rg := this.findRouteGuideByDefined(path)
 	if rg == nil {
@@ -230,15 +227,15 @@ func (this *SimpleRouter) FindRoute(context *ghttp.Context) *Route {
 		return nil
 	}
 
-	actionItem, ok := ri.actionMap[rg.actionName]
+	ai, ok := ri.actionMap[rg.actionName]
 	if !ok {
 		return nil
 	}
 
 	return &Route{
 		Cl:          ri.cl,
-		ActionValue: actionItem.value,
-		ArgsValues:  this.makeArgsValues(rg.actionArgs, actionItem.argsNum, context),
+		ActionValue: ai.value,
+		Args:        this.makeActionArgs(rg.actionArgs, ai.argsNum),
 	}
 }
 
@@ -286,24 +283,18 @@ func (this *SimpleRouter) findRouteGuideByGeneral(path string) *routeGuide {
 	return rg
 }
 
-func (this *SimpleRouter) makeArgsValues(routeGuideActionArgs []string, validArgsNum int, context *ghttp.Context) []reflect.Value {
-	rgArgsNum := len(routeGuideActionArgs)
+func (this *SimpleRouter) makeActionArgs(args []string, validArgsNum int) []string {
+	rgArgsNum := len(args)
 	missArgsNum := validArgsNum - rgArgsNum
 	switch {
 	case missArgsNum == 0:
 	case missArgsNum > 0:
 		for i := 0; i < missArgsNum; i++ {
-			routeGuideActionArgs = append(routeGuideActionArgs, "")
+			args = append(args, "")
 		}
 	case missArgsNum < 0:
-		routeGuideActionArgs = routeGuideActionArgs[:validArgsNum]
+		args = args[:validArgsNum]
 	}
 
-	argsValues := make([]reflect.Value, validArgsNum+1)
-	argsValues[0] = reflect.ValueOf(context)
-	for i, arg := range routeGuideActionArgs {
-		argsValues[i+1] = reflect.ValueOf(arg)
-	}
-
-	return argsValues
+	return args
 }
