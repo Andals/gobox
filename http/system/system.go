@@ -9,10 +9,6 @@ import (
 )
 
 type System struct {
-	//eg, access by nginx's proxy_pass
-	remoteRealIpHeaderKey   string
-	remoteRealPortHeaderKey string
-
 	router router.Router
 }
 
@@ -58,4 +54,29 @@ func (this *System) makeArgsValues(context controller.ActionContext, args []stri
 	}
 
 	return argsValues
+}
+
+type JumpFunc func(context controller.ActionContext, args ...interface{})
+
+type jumpItem struct {
+	jf JumpFunc
+
+	args []interface{}
+}
+
+func JumpOutAction(jf JumpFunc, args ...interface{}) {
+	ji := &jumpItem{
+		jf:   jf,
+		args: args,
+	}
+
+	panic(ji)
+}
+
+func Redirect302(url string) {
+	JumpOutAction(redirect302, url)
+}
+
+func redirect302(context controller.ActionContext, args ...interface{}) {
+	http.Redirect(context.ResponseWriter(), context.Request(), args[0].(string), 302)
 }
