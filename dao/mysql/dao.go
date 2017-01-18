@@ -5,14 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 
 	"andals/gobox/log"
 )
 
 const (
 	DRIVER_NAME_MYSQL = "mysql"
+
+	DEFAULT_DAIL_TIMEOUT  = 10 * time.Second
+	DEFAULT_READ_TIMEOUT  = 10 * time.Second
+	DEFAULT_WRITE_TIMEOUT = 10 * time.Second
 )
 
 type Dao struct {
@@ -22,12 +27,74 @@ type Dao struct {
 	logger log.ILogger
 }
 
-func DsnTcpIpV4(username, password, host, port, dbname string) string {
-	return username + ":" + password + "@tcp(" + host + ":" + port + ")/" + dbname
+type Dsn struct {
+	config *mysql.Config
 }
 
-func NewDao(dsn string, logger log.ILogger) (*Dao, error) {
-	db, err := sql.Open(DRIVER_NAME_MYSQL, dsn)
+var defaultParams = map[string]string{
+	"interpolateParams": "true",
+}
+
+func NewDsn(username, password, host, port, dbname string) *Dsn {
+	config := mysql.Config{
+		User:         username,
+		Passwd:       password,
+		Net:          "tcp",
+		Addr:         host + ":" + port,
+		DBName:       dbname,
+		Params:       defaultParams,
+		Timeout:      DEFAULT_DAIL_TIMEOUT,
+		ReadTimeout:  DEFAULT_READ_TIMEOUT,
+		WriteTimeout: DEFAULT_WRITE_TIMEOUT,
+	}
+
+	return &Dsn{
+		config: &config,
+	}
+}
+
+func (this *Dsn) SetReadTimeout(timeout time.Duration) *Dsn {
+	this.config.ReadTimeout = timeout
+
+	return this
+}
+
+func (this *Dsn) SetWriteTimeout(timeout time.Duration) *Dsn {
+	this.config.WriteTimeout = timeout
+
+	return this
+}
+
+func (this *Dsn) SetDialTimeout(timeout time.Duration) *Dsn {
+	this.config.Timeout = timeout
+
+	return this
+}
+
+func (this *Dsn) SetParam(key, value string) *Dsn {
+	this.config.Params[key] = value
+
+	return this
+}
+
+func (this *Dsn) EnableInterpolateParams() *Dsn {
+	this.config.Params["interpolateParams"] = "true"
+
+	return this
+}
+
+func (this *Dsn) DisableInterpolateParams() *Dsn {
+	this.config.Params["interpolateParams"] = "false"
+
+	return this
+}
+
+func (this *Dsn) String() string {
+	return this.config.FormatDSN()
+}
+
+func NewDao(dsn *Dsn, logger log.ILogger) (*Dao, error) {
+	db, err := sql.Open(DRIVER_NAME_MYSQL, dsn.String())
 	if err != nil {
 		return nil, err
 	}

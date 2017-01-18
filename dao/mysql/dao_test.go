@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"andals/gobox/log"
 	"andals/gobox/log/writer"
@@ -21,14 +22,8 @@ type tableTestMysqlRowItem struct {
 var dao *Dao
 
 func init() {
-	dsn := DsnTcpIpV4("root", "123", "127.0.0.1", "3306", "test")
-
-	path := "/tmp/test_mysql.log"
-
-	w, _ := writer.NewFileWriter(path)
-	logger, _ := log.NewSimpleLogger(w, log.LEVEL_INFO, new(log.SimpleFormater))
-
-	dao, _ = NewDao(dsn, logger)
+	dsn := getTestDsn()
+	dao = getTestDao(dsn)
 }
 
 func TestDaoExec(t *testing.T) {
@@ -175,4 +170,86 @@ func TestDaoSelectByIds(t *testing.T) {
 			fmt.Println(item)
 		}
 	}
+}
+
+func TestDsnSetReadTimeout(t *testing.T) {
+	misc.PrintCallerFuncNameForTest()
+
+	dsn := getTestDsn()
+	dsn.SetReadTimeout(1 * time.Microsecond)
+	d := getTestDao(dsn)
+
+	//should get io timeout
+	_, err := d.Query("SELECT * FROM test_mysql")
+	if err != nil {
+		fmt.Println("get timeout successfully:" + err.Error())
+	} else {
+		t.Fatal("timeout not occur!")
+	}
+
+}
+
+func TestDsnSetWriteTimeout(t *testing.T) {
+	misc.PrintCallerFuncNameForTest()
+
+	dsn := getTestDsn()
+	dsn.SetWriteTimeout(1 * time.Microsecond)
+	d := getTestDao(dsn)
+
+	//should get io timeout
+	_, err := d.Query("SELECT * FROM test_mysql")
+	if err != nil {
+		fmt.Println("get timeout successfully:" + err.Error())
+	} else {
+		t.Fatal("timeout not occur!")
+	}
+}
+
+func TestDsnSetDialTimeout(t *testing.T) {
+	misc.PrintCallerFuncNameForTest()
+
+	dsn := getTestDsn()
+	dsn.SetDialTimeout(1 * time.Microsecond)
+	d := getTestDao(dsn)
+
+	//should get dial timeout
+	_, err := d.Query("SELECT * FROM test_mysql")
+	if err != nil {
+		fmt.Println("get timeout successfully:" + err.Error())
+	} else {
+		t.Fatal("timeout not occur!")
+	}
+}
+
+func TestDsnInterpolateParams(t *testing.T) {
+	misc.PrintCallerFuncNameForTest()
+
+	dsn := getTestDsn()
+	dsn.DisableInterpolateParams()
+	status, ok := dsn.config.Params["interpolateParams"]
+	if !ok || status != "false" {
+		t.Fatal("disable interpolateParams error")
+	}
+	fmt.Println(dsn)
+	dsn.EnableInterpolateParams()
+	status, ok = dsn.config.Params["interpolateParams"]
+	if !ok || status != "true" {
+		t.Fatal("disable interpolateParams error")
+	}
+	fmt.Println(dsn)
+}
+
+func getTestDao(dsn *Dsn) *Dao {
+	path := "/tmp/test_mysql.log"
+
+	w, _ := writer.NewFileWriter(path)
+	logger, _ := log.NewSimpleLogger(w, log.LEVEL_INFO, new(log.SimpleFormater))
+
+	d, _ := NewDao(dsn, logger)
+
+	return d
+}
+
+func getTestDsn() *Dsn {
+	return NewDsn("root", "123", "127.0.0.1", "3306", "test")
 }
