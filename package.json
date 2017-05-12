@@ -1,6 +1,7 @@
 {
     "name": "andals/gobox",
     "dependencies": {
-        "github.com/go-sql-driver/mysql": "git+https://github.com/go-sql-driver/mysql.git#v1.3"
+        "github.com/go-sql-driver/mysql": "git+https://github.com/go-sql-driver/mysql.git#v1.3",
+        "github.com/fzzy/radix": "git+https://github.com/fzzy/radix.git#v0.5.6"
     }
 }
