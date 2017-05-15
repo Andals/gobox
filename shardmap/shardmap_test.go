@@ -4,8 +4,6 @@ import (
 	"andals/gobox/crypto"
 	"andals/gobox/misc"
 
-	//"fmt"
-
 	"strconv"
 	"sync"
 	"testing"
