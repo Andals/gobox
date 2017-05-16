@@ -1,7 +1,7 @@
 package Redis
 
 func (this *Client) Hset(key, field, value string) error {
-	r := this.client.Cmd("HSET", key, field, value)
+	r := this.runCmd("HSET", key, field, value)
 	if r.Err != nil {
 		return r.Err
 	}
@@ -10,12 +10,7 @@ func (this *Client) Hset(key, field, value string) error {
 }
 
 func (this *Client) Hmset(key string, fieldValues ...string) error {
-	args := []interface{}{key}
-	for i := 0; i < len(fieldValues); i++ {
-		args = append(args, fieldValues[i])
-	}
-
-	r := this.client.Cmd("HMSET", args...)
+	r := this.runCmd("HMSET", append([]string{key}, fieldValues...)...)
 	if r.Err != nil {
 		return r.Err
 	}
@@ -24,7 +19,7 @@ func (this *Client) Hmset(key string, fieldValues ...string) error {
 }
 
 func (this *Client) Hget(key, field string) (string, error) {
-	r := this.client.Cmd("HGET", key, field)
+	r := this.runCmd("HGET", key, field)
 	if r.Err != nil {
 		return "", r.Err
 	}
@@ -37,7 +32,7 @@ func (this *Client) Hget(key, field string) (string, error) {
 }
 
 func (this *Client) Hgetall(key string) (map[string]string, error) {
-	r := this.client.Cmd("HGETALL", key)
+	r := this.runCmd("HGETALL", key)
 	if r.Err != nil {
 		return nil, r.Err
 	}

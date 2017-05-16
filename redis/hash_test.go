@@ -1,12 +1,17 @@
 package Redis
 
 import (
+	"andals/gobox/log"
+	"andals/gobox/log/writer"
+
 	"testing"
 	"time"
 )
 
 func TestHash(t *testing.T) {
-	client, _ := NewClient("tcp", "127.0.0.1:6379", "123", time.Duration(10)*time.Second)
+	w, _ := writer.NewFileWriter("/tmp/test_redis.log")
+	logger, _ := log.NewSimpleLogger(w, log.LEVEL_INFO, new(log.SimpleFormater))
+	client, _ := NewClient("tcp", "127.0.0.1:6379", "123", time.Duration(10)*time.Second, logger)
 
 	defer func() {
 		client.Close()
