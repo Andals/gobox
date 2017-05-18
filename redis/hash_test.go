@@ -1,4 +1,4 @@
-package Redis
+package redis
 
 import (
 	"andals/gobox/log"

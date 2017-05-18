@@ -1,4 +1,4 @@
-package Redis
+package redis
 
 func (this *Client) Hset(key, field, value string) error {
 	r := this.runCmd("HSET", key, field, value)
