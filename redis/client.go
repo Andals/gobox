@@ -1,60 +1,33 @@
 package redis
 
 import (
-	//"fmt"
-	"time"
-
-	"andals/gobox/log"
-	"andals/gobox/misc"
 	"github.com/fzzy/radix/redis"
+
+	"time"
 )
 
-type Client struct {
-	client *redis.Client
+type IClient interface {
+	LastCmd() []byte
+	Free()
 
-	logger log.ILogger
+	Hset(key, field, value string) error
+	Hmset(key string, fieldValuePairs ...string) error
+	Hget(key, field string) (string, error)
+	Hgetall(key string) (map[string]string, error)
 }
 
-func NewClient(network, addr, pass string, timeout time.Duration, logger log.ILogger) (*Client, error) {
-	c, e := redis.DialTimeout(network, addr, timeout)
+func newRedisClient(network, addr, pass string, timeout time.Duration) (*redis.Client, error) {
+	client, e := redis.DialTimeout(network, addr, timeout)
 	if e != nil {
 		return nil, e
 	}
 
-	this := &Client{
-		client: c,
-		logger: logger,
-	}
-	r := this.client.Cmd("AUTH", pass)
+	r := client.Cmd("AUTH", pass)
 	if r.Err != nil {
-		this.client.Close()
+		client.Close()
 
 		return nil, r.Err
 	}
 
-	return this, nil
-}
-
-func (this *Client) Close() {
-	this.client.Close()
-}
-
-func (this *Client) runCmd(cmd string, args ...string) *redis.Reply {
-	this.logCmd(cmd, args...)
-
-	cnt := len(args)
-	iargs := make([]interface{}, cnt)
-	for i := 0; i < cnt; i++ {
-		iargs[i] = args[i]
-	}
-
-	return this.client.Cmd(cmd, iargs...)
-}
-func (this *Client) logCmd(cmd string, args ...string) {
-	msg := []byte(cmd)
-	for _, s := range args {
-		msg = misc.AppendBytes(msg, []byte(" "), []byte(s))
-	}
-
-	this.logger.Info(msg)
+	return client, nil
 }
