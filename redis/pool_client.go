@@ -89,22 +89,38 @@ func (this *PoolClient) Free() {
 	this.logger.Free()
 }
 
-func(this *PoolClient) LastCmd() []byte{
+func (this *PoolClient) LastCmd() []byte {
 	return this.client.LastCmd()
 }
 
-func (this *PoolClient)Hset(key, field, value string) error {
-	err:=this.client.Hset(key, field,value)
+func (this *PoolClient) Hset(key, field, value string) error {
+	err := this.client.Hset(key, field, value)
 
 	this.logger.Info(this.client.LastCmd())
 
 	return err
 }
 
-func (this *PoolClient)Hmset(key string, fieldValuePairs ...string) error {
-	err:=this.client.Hmset(key string, fieldValuePairs ...)
+func (this *PoolClient) Hmset(key string, fieldValuePairs ...string) error {
+	err := this.client.Hmset(key, fieldValuePairs...)
 
 	this.logger.Info(this.client.LastCmd())
 
 	return err
+}
+
+func (this *PoolClient) Hget(key, field string) (string, error) {
+	str, err := this.client.Hget(key, field)
+
+	this.logger.Info(this.client.LastCmd())
+
+	return str, err
+}
+
+func (this *PoolClient) Hgetall(key string) (map[string]string, error) {
+	m, err := this.client.Hgetall(key)
+
+	this.logger.Info(this.client.LastCmd())
+
+	return m, err
 }
