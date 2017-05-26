@@ -10,25 +10,23 @@ import (
 	"github.com/fzzy/radix/redis"
 )
 
-type SimpleClient struct {
+type simpleClient struct {
 	network string
 	addr    string
 	pass    string
 	timeout time.Duration
 
-	lastCmd []byte
-
 	client *redis.Client
 	logger log.ILogger
 }
 
-func NewSimpleClient(network, addr, pass string, timeout time.Duration, logger log.ILogger) (*SimpleClient, error) {
+func NewSimpleClient(network, addr, pass string, timeout time.Duration, logger log.ILogger) (*simpleClient, error) {
 	client, err := newRedisClient(network, addr, pass, timeout)
 	if err != nil {
 		return nil, err
 	}
 
-	this := &SimpleClient{
+	this := &simpleClient{
 		network: network,
 		addr:    addr,
 		pass:    pass,
@@ -41,22 +39,22 @@ func NewSimpleClient(network, addr, pass string, timeout time.Duration, logger l
 	return this, nil
 }
 
-func (this *SimpleClient) LastCmd() []byte {
-	return this.lastCmd
+func (this *simpleClient) SetLogger(logger log.ILogger) {
+	this.logger = logger
 }
 
-func (this *SimpleClient) Free() {
+func (this *simpleClient) Free() {
 	this.client.Close()
 	this.logger.Free()
 }
 
-func (this *SimpleClient) runCmd(cmd string, args ...string) *redis.Reply {
-	this.lastCmd = []byte(cmd)
+func (this *simpleClient) runCmd(cmd string, args ...string) *redis.Reply {
+	cmdBytes := []byte(cmd)
 	for _, s := range args {
-		this.lastCmd = misc.AppendBytes(this.lastCmd, []byte(" "), []byte(s))
+		cmdBytes = misc.AppendBytes(cmdBytes, []byte(" "), []byte(s))
 	}
 
-	this.logger.Info(this.lastCmd)
+	this.logger.Info(cmdBytes)
 
 	cnt := len(args)
 	iargs := make([]interface{}, cnt)
@@ -77,4 +75,13 @@ func (this *SimpleClient) runCmd(cmd string, args ...string) *redis.Reply {
 
 	this.client = c
 	return this.client.Cmd(cmd, iargs...)
+}
+
+func (this *simpleClient) Expire(key, seconds string) error {
+	r := this.runCmd("EXPIRE", key, seconds)
+	if r.Err != nil {
+		return r.Err
+	}
+
+	return nil
 }
