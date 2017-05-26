@@ -13,7 +13,9 @@ func TestPool(t *testing.T) {
 	logger, _ := log.NewSimpleLogger(w, log.LEVEL_INFO, new(log.SimpleFormater))
 	pool := NewPool(time.Second*3600, 300,
 		func() (IClient, error) {
-			return NewSimpleClient("tcp", "127.0.0.1:6379", "123", time.Second*3, logger)
+			client, err := NewSimpleClient("tcp", "127.0.0.1:6379", "123", time.Second*3)
+			client.SetLogger(logger)
+			return client, err
 		})
 
 	client, _ := pool.Get()

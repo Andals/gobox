@@ -20,7 +20,7 @@ type simpleClient struct {
 	logger log.ILogger
 }
 
-func NewSimpleClient(network, addr, pass string, timeout time.Duration, logger log.ILogger) (*simpleClient, error) {
+func NewSimpleClient(network, addr, pass string, timeout time.Duration) (*simpleClient, error) {
 	client, err := newRedisClient(network, addr, pass, timeout)
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func NewSimpleClient(network, addr, pass string, timeout time.Duration, logger l
 		timeout: timeout,
 
 		client: client,
-		logger: logger,
+		logger: new(log.NoopLogger),
 	}
 
 	return this, nil
