@@ -11,7 +11,9 @@ import (
 )
 
 func TestAsyncLogger(t *testing.T) {
-	defer FreeAsyncLogRoutines()
+	InitAsyncLogRoutine(4096, 1024)
+	defer FreeAsyncLogRoutine()
+	buffer.Init(1024, time.Second*7)
 
 	wg := new(sync.WaitGroup)
 
@@ -31,7 +33,7 @@ func asyncSimpleLogger(wg *sync.WaitGroup) {
 	fw, _ := writer.NewFileWriter("/tmp/test_async_simple_logger.log")
 	bw := buffer.NewBuffer(fw, 1024)
 	sl, _ := NewSimpleLogger(bw, LEVEL_INFO, new(SimpleFormater))
-	logger := NewAsyncLogger(sl, NewAsyncLogRoutine(10))
+	logger := NewAsyncLogger(sl)
 
 	msg := []byte("test async simple logger")
 
@@ -47,7 +49,7 @@ func asyncWebLogger(wg *sync.WaitGroup) {
 	fw, _ := writer.NewFileWriter("/tmp/test_async_web_logger.log")
 	bw := buffer.NewBuffer(fw, 1024)
 	sl, _ := NewSimpleLogger(bw, LEVEL_INFO, NewWebFormater([]byte("async_web"), []byte("127.0.0.1")))
-	logger := NewAsyncLogger(sl, NewAsyncLogRoutine(10))
+	logger := NewAsyncLogger(sl)
 
 	msg := []byte("test async web logger")
 

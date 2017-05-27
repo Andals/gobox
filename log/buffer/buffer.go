@@ -16,20 +16,18 @@ import (
 	"andals/gobox/log/writer"
 )
 
-const (
-	FLUSH_ROUTINE_CHANNEL_LEN = 1024
-	FLUSH_TIME_INTERVAL       = time.Second * 7
-)
+var fr *flushRoutine
 
-var fr flushRoutine
+// must be called first
+func Init(maxBufNum int, timeInterval time.Duration) {
+	fr = &flushRoutine{
+		buffers: make(map[string]*Buffer),
 
-func init() {
-	fr.buffers = make(map[string]*Buffer)
+		bufAddCh: make(chan *Buffer, maxBufNum),
+		bufDelCh: make(chan *Buffer, maxBufNum),
+	}
 
-	fr.bufAddCh = make(chan *Buffer, FLUSH_ROUTINE_CHANNEL_LEN)
-	fr.bufDelCh = make(chan *Buffer, FLUSH_ROUTINE_CHANNEL_LEN)
-
-	go fr.run(FLUSH_TIME_INTERVAL)
+	go fr.run(timeInterval)
 }
 
 /**
@@ -84,7 +82,7 @@ func (this *flushRoutine) run(timeInterval time.Duration) {
 }
 
 func bfrKey(buf *Buffer) string {
-	return fmt.Sprintf("%x", buf)
+	return fmt.Sprintf("%p", buf)
 }
 
 /**  @} */

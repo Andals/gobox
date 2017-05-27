@@ -3,6 +3,7 @@ package log
 import (
 	//     "fmt"
 	"testing"
+	"time"
 
 	"andals/gobox/log/buffer"
 	"andals/gobox/log/writer"
@@ -20,6 +21,8 @@ func TestSimpleLogger(t *testing.T) {
 }
 
 func TestSimpleBufferLogger(t *testing.T) {
+	buffer.Init(1024, time.Second*7)
+
 	fw, _ := writer.NewFileWriter("/tmp/test_simple_buffer_logger.log")
 	bw := buffer.NewBuffer(fw, 1024)
 	logger, _ := NewSimpleLogger(bw, LEVEL_INFO, new(SimpleFormater))

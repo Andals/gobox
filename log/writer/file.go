@@ -20,8 +20,9 @@ import (
 * @{ */
 
 type File struct {
-	path   string
-	lockCh chan int
+	path        string
+	lockCh      chan int
+	closeOnFree bool
 
 	*os.File
 }
@@ -33,8 +34,9 @@ func NewFileWriter(path string) (*File, error) {
 	}
 
 	this := &File{
-		path:   path,
-		lockCh: make(chan int, 1),
+		path:        path,
+		lockCh:      make(chan int, 1),
+		closeOnFree: false,
 
 		File: f,
 	}
@@ -42,6 +44,12 @@ func NewFileWriter(path string) (*File, error) {
 	this.lockCh <- 1
 
 	return this, nil
+}
+
+func (this *File) CloseOnFree(closeOneFree bool) *File {
+	this.closeOnFree = closeOneFree
+
+	return this
 }
 
 func (this *File) Write(msg []byte) (int, error) {
@@ -63,6 +71,9 @@ func (this *File) Flush() error {
 }
 
 func (this *File) Free() {
+	if this.closeOnFree {
+		this.File.Close()
+	}
 }
 
 func openFile(path string) (*os.File, error) {
