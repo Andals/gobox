@@ -93,7 +93,7 @@ func (this *asyncLogRoutine) run() {
 				logAsyncMsg(am)
 			}
 			for _, al := range this.allist {
-				al.Free()
+				al.logger.Free()
 			}
 			this.freeCh <- 1
 			return
@@ -194,7 +194,12 @@ func (this *asyncLogger) Flush() error {
 }
 
 func (this *asyncLogger) Free() {
-	this.waitFree = true
+	if this.msgCnt == 0 {
+		this.logger.Free()
+		alr.delCh<-this
+	} else {
+		this.waitFree = true
+	}
 }
 
 /**  @} */
