@@ -10,7 +10,6 @@ package buffer
 import (
 	"bufio"
 	"fmt"
-	"sync"
 	"time"
 
 	"andals/gobox/log/writer"
@@ -23,8 +22,8 @@ func Init(maxBufNum int, timeInterval time.Duration) {
 	fr = &flushRoutine{
 		buffers: make(map[string]*Buffer),
 
-		bufAddCh: make(chan *Buffer, maxBufNum),
-		bufDelCh: make(chan *Buffer, maxBufNum),
+		bufAddCh: make(chan *bufAddChItem, maxBufNum),
+		bufDelCh: make(chan string, maxBufNum),
 	}
 
 	go fr.run(timeInterval)
@@ -34,55 +33,43 @@ func Init(maxBufNum int, timeInterval time.Duration) {
 * @name auto flush routine
 * @{ */
 
+type bufAddChItem struct {
+	key string
+	buf *Buffer
+}
+
 type flushRoutine struct {
 	buffers map[string]*Buffer
-	brwMux  sync.RWMutex
 
-	bufAddCh chan *Buffer
-	bufDelCh chan *Buffer
+	bufAddCh chan *bufAddChItem
+	bufDelCh chan string
 }
 
-func (this *flushRoutine) addBuffer(buf *Buffer) {
-	this.bufAddCh <- buf
+func (this *flushRoutine) addBuffer(key string, buf *Buffer) {
+	this.bufAddCh <- &bufAddChItem{key, buf}
 }
 
-func (this *flushRoutine) delBuffer(buf *Buffer) {
-	this.bufDelCh <- buf
+func (this *flushRoutine) delBuffer(key string) {
+	this.bufDelCh <- key
 }
 
 func (this *flushRoutine) run(timeInterval time.Duration) {
 	for {
 		select {
-		case buf, _ := <-this.bufAddCh:
-			key := bfrKey(buf)
-
-			this.brwMux.Lock()
-			this.buffers[key] = buf
-			this.brwMux.Unlock()
-		case buf, _ := <-this.bufDelCh:
-			key := bfrKey(buf)
-
-			this.brwMux.Lock()
+		case item, _ := <-this.bufAddCh:
+			this.buffers[item.key] = item.buf
+		case key, _ := <-this.bufDelCh:
 			delete(this.buffers, key)
-			this.brwMux.Unlock()
 		case <-time.After(timeInterval):
-			this.brwMux.RLock()
-			for _, buf := range this.buffers {
-				fr.brwMux.RUnlock()
+			for key, buf := range this.buffers {
 				if buf == nil {
-					this.delBuffer(buf)
+					delete(this.buffers, key)
 				} else {
 					buf.Flush()
 				}
-				this.brwMux.RLock()
 			}
-			this.brwMux.RUnlock()
 		}
 	}
-}
-
-func bfrKey(buf *Buffer) string {
-	return fmt.Sprintf("%p", buf)
 }
 
 /**  @} */
@@ -96,6 +83,7 @@ type Buffer struct {
 	buf *bufio.Writer
 
 	lockCh chan int
+	key    string
 }
 
 func NewBuffer(w writer.IWriter, bufsize int) *Buffer {
@@ -106,8 +94,9 @@ func NewBuffer(w writer.IWriter, bufsize int) *Buffer {
 		lockCh: make(chan int, 1),
 	}
 
+	this.key = fmt.Sprintf("%p", this)
 	this.lockCh <- 1
-	fr.addBuffer(this)
+	fr.addBuffer(this.key, this)
 
 	return this
 }
@@ -132,7 +121,7 @@ func (this *Buffer) Free() {
 	this.Flush()
 	this.w.Free()
 
-	fr.delBuffer(this)
+	fr.delBuffer(this.key)
 }
 
 /**  @} */

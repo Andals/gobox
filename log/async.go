@@ -196,7 +196,7 @@ func (this *asyncLogger) Flush() error {
 func (this *asyncLogger) Free() {
 	if this.msgCnt == 0 {
 		this.logger.Free()
-		alr.delCh<-this
+		alr.delCh <- this
 	} else {
 		this.waitFree = true
 	}
