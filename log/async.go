@@ -104,12 +104,14 @@ func (this *asyncLogRoutine) run() {
 
 func (this *asyncLogRoutine) logAsyncMsg(am *asyncMsg) {
 	am.al.logger.Log(am.level, am.msg)
-	am.al.msgCnt--
 
+	<-am.al.waitFreeLockCh
+	am.al.msgCnt--
 	if am.al.waitFree && am.al.msgCnt == 0 {
 		am.al.logger.Free()
 		delete(this.asyncLoggers, am.al.key)
 	}
+	am.al.waitFreeLockCh <- 1
 }
 
 /**  @} */
@@ -122,19 +124,22 @@ type asyncLogger struct {
 	logger ILogger
 	key    string
 
-	msgCnt   int
-	waitFree bool
+	msgCnt         int
+	waitFree       bool
+	waitFreeLockCh chan int
 }
 
 func NewAsyncLogger(logger ILogger) *asyncLogger {
 	this := &asyncLogger{
 		logger: logger,
 
-		msgCnt:   0,
-		waitFree: false,
+		msgCnt:         0,
+		waitFree:       false,
+		waitFreeLockCh: make(chan int, 1),
 	}
 
 	this.key = fmt.Sprintf("%p", this)
+	this.waitFreeLockCh <- 1
 	alr.addAsyncLogger(this.key, this)
 
 	return this
@@ -193,12 +198,14 @@ func (this *asyncLogger) Flush() error {
 }
 
 func (this *asyncLogger) Free() {
+	<-this.waitFreeLockCh
 	if this.msgCnt == 0 {
 		this.logger.Free()
 		alr.delAsyncLogger(this.key)
 	} else {
 		this.waitFree = true
 	}
+	this.waitFreeLockCh <- 1
 }
 
 /**  @} */
