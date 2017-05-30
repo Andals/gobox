@@ -18,14 +18,11 @@ func InitAsyncLogRoutine(msgQueueLen int, maxLoggerNum int) {
 		flushCh: make(chan ILogger, maxLoggerNum),
 		freeCh:  make(chan int),
 
-		lockCh: make(chan int, 1),
-		addCh:  make(chan *asyncLogger, maxLoggerNum),
-		delCh:  make(chan *asyncLogger, maxLoggerNum),
+		addCh: make(chan *asyncLoggerAddChItem, maxLoggerNum),
+		delCh: make(chan string, maxLoggerNum),
 
-		allist: make(map[string]*asyncLogger),
+		asyncLoggers: make(map[string]*asyncLogger),
 	}
-
-	alr.lockCh <- 1
 
 	go alr.run()
 }
@@ -38,11 +35,10 @@ func FreeAsyncLogRoutine() {
 	close(alr.flushCh)
 	close(alr.freeCh)
 
-	close(alr.lockCh)
 	close(alr.addCh)
 	close(alr.delCh)
 
-	alr.allist = nil
+	alr.asyncLoggers = nil
 }
 
 type asyncMsg struct {
@@ -56,44 +52,49 @@ type asyncMsg struct {
 * @name async log routine
 * @{ */
 
+type asyncLoggerAddChItem struct {
+	key    string
+	logger *asyncLogger
+}
+
 type asyncLogRoutine struct {
 	msgCh   chan *asyncMsg
 	flushCh chan ILogger
 	freeCh  chan int
 
-	addCh  chan *asyncLogger
-	delCh  chan *asyncLogger
-	lockCh chan int
+	addCh chan *asyncLoggerAddChItem
+	delCh chan string
 
-	allist map[string]*asyncLogger
+	asyncLoggers map[string]*asyncLogger
+}
+
+func (this *asyncLogRoutine) addAsyncLogger(key string, logger *asyncLogger) {
+	this.addCh <- &asyncLoggerAddChItem{key, logger}
+}
+
+func (this *asyncLogRoutine) delAsyncLogger(key string) {
+	this.delCh <- key
 }
 
 func (this *asyncLogRoutine) run() {
 	for {
 		select {
-		case logger, _ := <-this.addCh:
-			key := asyncLoggerKey(logger)
-
-			<-this.lockCh
-			this.allist[key] = logger
-			this.lockCh <- 1
-		case logger, _ := <-this.delCh:
-			key := asyncLoggerKey(logger)
-
-			<-this.lockCh
-			delete(this.allist, key)
-			this.lockCh <- 1
+		case item, _ := <-this.addCh:
+			this.asyncLoggers[item.key] = item.logger
+		case key, _ := <-this.delCh:
+			delete(this.asyncLoggers, key)
 		case am, _ := <-this.msgCh:
-			logAsyncMsg(am)
+			this.logAsyncMsg(am)
 		case logger, _ := <-this.flushCh:
 			logger.Flush()
 		case <-this.freeCh:
 			for len(this.msgCh) != 0 {
 				am, _ := <-this.msgCh
-				logAsyncMsg(am)
+				this.logAsyncMsg(am)
 			}
-			for _, al := range this.allist {
+			for key, al := range this.asyncLoggers {
 				al.logger.Free()
+				delete(this.asyncLoggers, key)
 			}
 			this.freeCh <- 1
 			return
@@ -101,17 +102,13 @@ func (this *asyncLogRoutine) run() {
 	}
 }
 
-func asyncLoggerKey(logger *asyncLogger) string {
-	return fmt.Sprintf("%p", logger)
-}
-
-func logAsyncMsg(am *asyncMsg) {
+func (this *asyncLogRoutine) logAsyncMsg(am *asyncMsg) {
 	am.al.logger.Log(am.level, am.msg)
 	am.al.msgCnt--
 
 	if am.al.waitFree && am.al.msgCnt == 0 {
 		am.al.logger.Free()
-		alr.delCh <- am.al
+		delete(this.asyncLoggers, am.al.key)
 	}
 }
 
@@ -123,6 +120,7 @@ func logAsyncMsg(am *asyncMsg) {
 
 type asyncLogger struct {
 	logger ILogger
+	key    string
 
 	msgCnt   int
 	waitFree bool
@@ -136,7 +134,8 @@ func NewAsyncLogger(logger ILogger) *asyncLogger {
 		waitFree: false,
 	}
 
-	alr.addCh <- this
+	this.key = fmt.Sprintf("%p", this)
+	alr.addAsyncLogger(this.key, this)
 
 	return this
 }
@@ -196,7 +195,7 @@ func (this *asyncLogger) Flush() error {
 func (this *asyncLogger) Free() {
 	if this.msgCnt == 0 {
 		this.logger.Free()
-		alr.delCh <- this
+		alr.delAsyncLogger(this.key)
 	} else {
 		this.waitFree = true
 	}
