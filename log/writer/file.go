@@ -73,6 +73,7 @@ func (this *File) Flush() error {
 func (this *File) Free() {
 	if this.closeOnFree {
 		this.File.Close()
+		close(this.lockCh)
 	}
 }
 

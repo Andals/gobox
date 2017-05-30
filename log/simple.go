@@ -108,4 +108,6 @@ func (this *simpleLogger) Flush() error {
 
 func (this *simpleLogger) Free() {
 	this.w.Free()
+	close(this.lockCh)
+	this.levelWriters = nil
 }
