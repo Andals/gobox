@@ -54,13 +54,15 @@ func (this *flushRoutine) delBuffer(key string) {
 }
 
 func (this *flushRoutine) run(timeInterval time.Duration) {
+	ticker := time.NewTicker(timeInterval)
+
 	for {
 		select {
 		case item, _ := <-this.bufAddCh:
 			this.buffers[item.key] = item.buf
 		case key, _ := <-this.bufDelCh:
 			delete(this.buffers, key)
-		case <-time.After(timeInterval):
+		case <-ticker.C:
 			for key, buf := range this.buffers {
 				if buf == nil {
 					delete(this.buffers, key)
