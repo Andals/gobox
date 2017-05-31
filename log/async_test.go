@@ -6,14 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"andals/gobox/log/buffer"
 	"andals/gobox/log/writer"
 )
 
 func TestAsyncLogger(t *testing.T) {
 	InitAsyncLogRoutine(4096, 1024)
 	defer FreeAsyncLogRoutine()
-	buffer.Init(1024, time.Second*7)
+	writer.InitBufferAutoFlushRoutine(1024, time.Second*7)
 
 	wg := new(sync.WaitGroup)
 
@@ -31,7 +30,7 @@ func asyncSimpleLogger(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	fw, _ := writer.NewFileWriter("/tmp/test_async_simple_logger.log")
-	bw := buffer.NewBuffer(fw, 1024)
+	bw := writer.NewBuffer(fw, 1024)
 	sl, _ := NewSimpleLogger(bw, LEVEL_INFO, new(SimpleFormater))
 	logger := NewAsyncLogger(sl)
 
@@ -47,7 +46,7 @@ func asyncWebLogger(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	fw, _ := writer.NewFileWriter("/tmp/test_async_web_logger.log")
-	bw := buffer.NewBuffer(fw, 1024)
+	bw := writer.NewBuffer(fw, 1024)
 	sl, _ := NewSimpleLogger(bw, LEVEL_INFO, NewWebFormater([]byte("async_web"), []byte("127.0.0.1")))
 	logger := NewAsyncLogger(sl)
 

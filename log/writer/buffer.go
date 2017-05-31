@@ -5,28 +5,26 @@
 * @date 2016-02-04
  */
 
-package buffer
+package writer
 
 import (
 	"bufio"
 	"fmt"
 	"time"
-
-	"andals/gobox/log/writer"
 )
 
-var fr *flushRoutine
+var bfr *bufFlushRoutine
 
 // must be called first
-func Init(maxBufNum int, timeInterval time.Duration) {
-	fr = &flushRoutine{
+func InitBufferAutoFlushRoutine(maxBufNum int, timeInterval time.Duration) {
+	bfr = &bufFlushRoutine{
 		buffers: make(map[string]*Buffer),
 
 		bufAddCh: make(chan *bufAddChItem, maxBufNum),
 		bufDelCh: make(chan string, maxBufNum),
 	}
 
-	go fr.run(timeInterval)
+	go bfr.run(timeInterval)
 }
 
 /**
@@ -38,22 +36,22 @@ type bufAddChItem struct {
 	buf *Buffer
 }
 
-type flushRoutine struct {
+type bufFlushRoutine struct {
 	buffers map[string]*Buffer
 
 	bufAddCh chan *bufAddChItem
 	bufDelCh chan string
 }
 
-func (this *flushRoutine) addBuffer(key string, buf *Buffer) {
+func (this *bufFlushRoutine) addBuffer(key string, buf *Buffer) {
 	this.bufAddCh <- &bufAddChItem{key, buf}
 }
 
-func (this *flushRoutine) delBuffer(key string) {
+func (this *bufFlushRoutine) delBuffer(key string) {
 	this.bufDelCh <- key
 }
 
-func (this *flushRoutine) run(timeInterval time.Duration) {
+func (this *bufFlushRoutine) run(timeInterval time.Duration) {
 	ticker := time.NewTicker(timeInterval)
 
 	for {
@@ -81,14 +79,14 @@ func (this *flushRoutine) run(timeInterval time.Duration) {
 * @{ */
 
 type Buffer struct {
-	w   writer.IWriter
+	w   IWriter
 	buf *bufio.Writer
 
 	lockCh chan int
 	key    string
 }
 
-func NewBuffer(w writer.IWriter, bufsize int) *Buffer {
+func NewBuffer(w IWriter, bufsize int) *Buffer {
 	this := &Buffer{
 		w:   w,
 		buf: bufio.NewWriterSize(w, bufsize),
@@ -98,7 +96,7 @@ func NewBuffer(w writer.IWriter, bufsize int) *Buffer {
 
 	this.key = fmt.Sprintf("%p", this)
 	this.lockCh <- 1
-	fr.addBuffer(this.key, this)
+	bfr.addBuffer(this.key, this)
 
 	return this
 }
@@ -123,7 +121,7 @@ func (this *Buffer) Free() {
 	this.Flush()
 	this.w.Free()
 
-	fr.delBuffer(this.key)
+	bfr.delBuffer(this.key)
 }
 
 /**  @} */

@@ -7,7 +7,9 @@
 
 package log
 
-import "fmt"
+import (
+	"fmt"
+)
 
 var alr *asyncLogRoutine
 
