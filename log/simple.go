@@ -25,7 +25,7 @@ type simpleLogger struct {
 func NewSimpleLogger(writer logWriter.IWriter, globalLevel int, formater IFormater) (*simpleLogger, error) {
 	_, ok := logLevels[globalLevel]
 	if !ok {
-		errors.New("Global level not exists")
+		return nil, errors.New("Global level not exists")
 	}
 
 	this := &simpleLogger{
