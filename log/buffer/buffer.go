@@ -120,7 +120,6 @@ func (this *Buffer) Flush() error {
 func (this *Buffer) Free() {
 	this.Flush()
 	this.w.Free()
-	close(this.lockCh)
 
 	fr.delBuffer(this.key)
 }

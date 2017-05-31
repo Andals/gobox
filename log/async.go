@@ -31,13 +31,6 @@ func FreeAsyncLogRoutine() {
 	alr.freeCh <- 1
 	<-alr.freeCh
 
-	close(alr.msgCh)
-	close(alr.flushCh)
-	close(alr.freeCh)
-
-	close(alr.addCh)
-	close(alr.delCh)
-
 	alr.asyncLoggers = nil
 }
 
