@@ -60,7 +60,7 @@ func (this *bufFlushRoutine) run(timeInterval time.Duration) {
 			buf.buf = nil
 		case <-ticker.C:
 			for index, buf := range this.buffers {
-				if buf == nil {
+				if buf == nil || buf.buf == nil {
 					delete(this.buffers, index)
 				} else {
 					buf.Flush()
