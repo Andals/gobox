@@ -9,7 +9,6 @@ package writer
 
 import (
 	"bufio"
-	"fmt"
 	"time"
 )
 
@@ -18,10 +17,10 @@ var bfr *bufFlushRoutine
 // must be called first
 func InitBufferAutoFlushRoutine(maxBufNum int, timeInterval time.Duration) {
 	bfr = &bufFlushRoutine{
-		buffers: make(map[string]*Buffer),
+		buffers: make(map[uint64]*Buffer),
 
-		bufAddCh: make(chan *bufAddChItem, maxBufNum),
-		bufDelCh: make(chan string, maxBufNum),
+		bufAddCh: make(chan *Buffer, maxBufNum),
+		bufDelCh: make(chan *Buffer, maxBufNum),
 	}
 
 	go bfr.run(timeInterval)
@@ -31,24 +30,20 @@ func InitBufferAutoFlushRoutine(maxBufNum int, timeInterval time.Duration) {
 * @name auto flush routine
 * @{ */
 
-type bufAddChItem struct {
-	key string
-	buf *Buffer
-}
-
 type bufFlushRoutine struct {
-	buffers map[string]*Buffer
+	curIndex uint64
+	buffers  map[uint64]*Buffer
 
-	bufAddCh chan *bufAddChItem
-	bufDelCh chan string
+	bufAddCh chan *Buffer
+	bufDelCh chan *Buffer
 }
 
-func (this *bufFlushRoutine) addBuffer(key string, buf *Buffer) {
-	this.bufAddCh <- &bufAddChItem{key, buf}
+func (this *bufFlushRoutine) addBuffer(buf *Buffer) {
+	this.bufAddCh <- buf
 }
 
-func (this *bufFlushRoutine) delBuffer(key string) {
-	this.bufDelCh <- key
+func (this *bufFlushRoutine) delBuffer(buf *Buffer) {
+	this.bufDelCh <- buf
 }
 
 func (this *bufFlushRoutine) run(timeInterval time.Duration) {
@@ -56,14 +51,17 @@ func (this *bufFlushRoutine) run(timeInterval time.Duration) {
 
 	for {
 		select {
-		case item, _ := <-this.bufAddCh:
-			this.buffers[item.key] = item.buf
-		case key, _ := <-this.bufDelCh:
-			delete(this.buffers, key)
+		case buf, _ := <-this.bufAddCh:
+			buf.index = this.curIndex
+			this.buffers[this.curIndex] = buf
+			this.curIndex++
+		case buf, _ := <-this.bufDelCh:
+			delete(this.buffers, buf.index)
+			buf.buf = nil
 		case <-ticker.C:
-			for key, buf := range this.buffers {
+			for index, buf := range this.buffers {
 				if buf == nil {
-					delete(this.buffers, key)
+					delete(this.buffers, index)
 				} else {
 					buf.Flush()
 				}
@@ -83,7 +81,7 @@ type Buffer struct {
 	buf *bufio.Writer
 
 	lockCh chan int
-	key    string
+	index  uint64
 }
 
 func NewBuffer(w IWriter, bufsize int) *Buffer {
@@ -94,9 +92,8 @@ func NewBuffer(w IWriter, bufsize int) *Buffer {
 		lockCh: make(chan int, 1),
 	}
 
-	this.key = fmt.Sprintf("%p", this)
 	this.lockCh <- 1
-	bfr.addBuffer(this.key, this)
+	bfr.addBuffer(this)
 
 	return this
 }
@@ -121,7 +118,7 @@ func (this *Buffer) Free() {
 	this.Flush()
 	this.w.Free()
 
-	bfr.delBuffer(this.key)
+	bfr.delBuffer(this)
 }
 
 /**  @} */

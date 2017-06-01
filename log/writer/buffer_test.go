@@ -7,10 +7,10 @@ import (
 )
 
 func TestBufferFileWriter(t *testing.T) {
-	Init(1024, time.Second*7)
+	InitBufferAutoFlushRoutine(1024, time.Second*7)
 
 	path := "/tmp/test_buffer.log"
-	bufsize := 4096
+	bufsize := 1024
 
 	fw, _ := NewFileWriter(path)
 	bw := NewBuffer(fw, bufsize)
