@@ -10,16 +10,11 @@ package log
 var alr *asyncLogRoutine
 
 // must be called first
-func InitAsyncLogRoutine(msgQueueLen int, maxLoggerNum int) {
+func InitAsyncLogRoutine(msgQueueLen int) {
 	alr = &asyncLogRoutine{
 		msgCh:   make(chan *asyncMsg, msgQueueLen),
-		flushCh: make(chan ILogger, maxLoggerNum),
+		flushCh: make(chan ILogger, msgQueueLen),
 		freeCh:  make(chan int),
-
-		addCh: make(chan *asyncLogger, maxLoggerNum),
-		delCh: make(chan *asyncLogger, maxLoggerNum),
-
-		asyncLoggers: make(map[uint64]*asyncLogger),
 	}
 
 	go alr.run()
@@ -28,15 +23,13 @@ func InitAsyncLogRoutine(msgQueueLen int, maxLoggerNum int) {
 func FreeAsyncLogRoutine() {
 	alr.freeCh <- 1
 	<-alr.freeCh
-
-	alr.asyncLoggers = nil
 }
 
 type asyncMsg struct {
 	level int
 	msg   []byte
 
-	al *asyncLogger
+	alogger *asyncLogger
 }
 
 /**
@@ -47,47 +40,19 @@ type asyncLogRoutine struct {
 	msgCh   chan *asyncMsg
 	flushCh chan ILogger
 	freeCh  chan int
-
-	addCh chan *asyncLogger
-	delCh chan *asyncLogger
-
-	curIndex     uint64
-	asyncLoggers map[uint64]*asyncLogger
-}
-
-func (this *asyncLogRoutine) addAsyncLogger(logger *asyncLogger) {
-	this.addCh <- logger
-}
-
-func (this *asyncLogRoutine) delAsyncLogger(logger *asyncLogger) {
-	this.delCh <- logger
-}
-
-func (this *asyncLogRoutine) freeAsyncLogger(logger *asyncLogger) {
-	logger.logger.Free()
-	delete(this.asyncLoggers, logger.index)
 }
 
 func (this *asyncLogRoutine) run() {
 	for {
 		select {
-		case logger, _ := <-this.addCh:
-			logger.index = this.curIndex
-			this.asyncLoggers[this.curIndex] = logger
-			this.curIndex++
-		case logger, _ := <-this.delCh:
-			this.freeAsyncLogger(logger)
 		case am, _ := <-this.msgCh:
-			this.logAsyncMsg(am)
+			logAsyncMsg(am)
 		case logger, _ := <-this.flushCh:
 			logger.Flush()
 		case <-this.freeCh:
 			for len(this.msgCh) != 0 {
 				am, _ := <-this.msgCh
-				this.logAsyncMsg(am)
-			}
-			for _, al := range this.asyncLoggers {
-				this.freeAsyncLogger(al)
+				logAsyncMsg(am)
 			}
 			this.freeCh <- 1
 			return
@@ -95,15 +60,17 @@ func (this *asyncLogRoutine) run() {
 	}
 }
 
-func (this *asyncLogRoutine) logAsyncMsg(am *asyncMsg) {
-	am.al.logger.Log(am.level, am.msg)
+func logAsyncMsg(am *asyncMsg) {
+	am.alogger.logger.Log(am.level, am.msg)
+	am.alogger.msgCnt--
 
-	<-am.al.waitFreeLockCh
-	am.al.msgCnt--
-	if am.al.waitFree && am.al.msgCnt == 0 {
-		this.freeAsyncLogger(am.al)
+	if am.alogger.msgCnt == 0 {
+		<-am.alogger.freeLockCh
+		if am.alogger.waitFree {
+			am.alogger.logger.Free()
+		}
+		am.alogger.freeLockCh <- 1
 	}
-	am.al.waitFreeLockCh <- 1
 }
 
 /**  @} */
@@ -114,24 +81,22 @@ func (this *asyncLogRoutine) logAsyncMsg(am *asyncMsg) {
 
 type asyncLogger struct {
 	logger ILogger
-	index  uint64
 
-	msgCnt         int
-	waitFree       bool
-	waitFreeLockCh chan int
+	msgCnt     int
+	waitFree   bool
+	freeLockCh chan int
 }
 
 func NewAsyncLogger(logger ILogger) *asyncLogger {
 	this := &asyncLogger{
 		logger: logger,
 
-		msgCnt:         0,
-		waitFree:       false,
-		waitFreeLockCh: make(chan int, 1),
+		msgCnt:     0,
+		waitFree:   false,
+		freeLockCh: make(chan int, 1),
 	}
 
-	this.waitFreeLockCh <- 1
-	alr.addAsyncLogger(this)
+	this.freeLockCh <- 1
 
 	return this
 }
@@ -173,7 +138,7 @@ func (this *asyncLogger) Log(level int, msg []byte) error {
 		level: level,
 		msg:   msg,
 
-		al: this,
+		alogger: this,
 	}
 
 	this.msgCnt++
@@ -189,13 +154,13 @@ func (this *asyncLogger) Flush() error {
 }
 
 func (this *asyncLogger) Free() {
-	<-this.waitFreeLockCh
 	if this.msgCnt == 0 {
-		alr.delAsyncLogger(this)
+		this.logger.Free()
 	} else {
+		<-this.freeLockCh
 		this.waitFree = true
+		this.freeLockCh <- 1
 	}
-	this.waitFreeLockCh <- 1
 }
 
 /**  @} */

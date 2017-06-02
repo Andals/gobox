@@ -18,4 +18,6 @@ func TestBufferFileWriter(t *testing.T) {
 	bw.Write([]byte("test file writer with buffer and time interval\n"))
 	time.Sleep(time.Second * 5)
 	bw.Free()
+
+	FreeBuffers()
 }

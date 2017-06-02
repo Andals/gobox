@@ -26,6 +26,10 @@ func InitBufferAutoFlushRoutine(maxBufNum int, timeInterval time.Duration) {
 	go bfr.run(timeInterval)
 }
 
+func FreeBuffers() {
+	bfr.flushAll()
+}
+
 /**
 * @name auto flush routine
 * @{ */
@@ -46,6 +50,16 @@ func (this *bufFlushRoutine) delBuffer(buf *Buffer) {
 	this.bufDelCh <- buf
 }
 
+func (this *bufFlushRoutine) flushAll() {
+	for index, buf := range this.buffers {
+		if buf == nil || buf.buf == nil {
+			delete(this.buffers, index)
+		} else {
+			buf.Flush()
+		}
+	}
+}
+
 func (this *bufFlushRoutine) run(timeInterval time.Duration) {
 	ticker := time.NewTicker(timeInterval)
 
@@ -59,13 +73,7 @@ func (this *bufFlushRoutine) run(timeInterval time.Duration) {
 			delete(this.buffers, buf.index)
 			buf.buf = nil
 		case <-ticker.C:
-			for index, buf := range this.buffers {
-				if buf == nil || buf.buf == nil {
-					delete(this.buffers, index)
-				} else {
-					buf.Flush()
-				}
-			}
+			this.flushAll()
 		}
 	}
 }
