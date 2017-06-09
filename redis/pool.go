@@ -34,7 +34,7 @@ func NewPool(clientTimeout time.Duration, size int, newClientFunc func() (IClien
 func (this *Pool) Get() (IClient, error) {
 	select {
 	case pItem := <-this.ch:
-		if time.Now().Unix()-pItem.addTime.Unix() < int64(this.clientTimeout) {
+		if time.Now().UnixNano()-pItem.addTime.UnixNano() < int64(this.clientTimeout) {
 			return pItem.client, nil
 		}
 	default:
