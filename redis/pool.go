@@ -37,6 +37,7 @@ func (this *Pool) Get() (IClient, error) {
 		if time.Now().UnixNano()-pItem.addTime.UnixNano() < int64(this.clientTimeout) {
 			return pItem.client, nil
 		}
+		pItem.client.Free()
 	default:
 	}
 
