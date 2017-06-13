@@ -23,6 +23,7 @@ type IClient interface {
 	Free()
 
 	Expire(key, seconds string) error
+	Del(key string) error
 
 	//args：[EX seconds] [PX milliseconds] [NX|XX]
 	Set(key, value string, args ...string) error
@@ -33,6 +34,7 @@ type IClient interface {
 	Hmset(key string, fieldValuePairs ...string) error
 	Hget(key, field string) *StringResult
 	Hgetall(key string) *HashResult
+	Hdel(key string, fields ...string) error
 }
 
 func newStringResult(r *redis.Reply) *StringResult {

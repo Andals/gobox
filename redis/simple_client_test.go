@@ -26,6 +26,12 @@ func TestSimpleClientExpire(t *testing.T) {
 	testExpire(t, client)
 }
 
+func TestSimpleClientDel(t *testing.T) {
+	client := getSimpleClient()
+
+	testDel(t, client)
+}
+
 func getSimpleClient() *simpleClient {
 	w, _ := writer.NewFileWriter("/tmp/test_redis_simple_client.log")
 	logger, _ := log.NewSimpleLogger(w, log.LEVEL_INFO, new(log.SimpleFormater))

@@ -85,3 +85,12 @@ func (this *simpleClient) Expire(key, seconds string) error {
 
 	return nil
 }
+
+func (this *simpleClient) Del(key string) error {
+	r := this.runCmd("DEL", key)
+	if r.Err != nil {
+		return r.Err
+	}
+
+	return nil
+}

@@ -15,6 +15,12 @@ func testHash(t *testing.T, client IClient) {
 		t.Error("str must be equal 10")
 	}
 
+	client.Hdel(key, "2017-05-01")
+	sr = client.Hget(key, "2017-05-01")
+	if sr != nil {
+		t.Error("HDEL error")
+	}
+
 	om := map[string]string{
 		"2017-05-01": "10",
 		"2017-05-02": "3",
@@ -38,14 +44,14 @@ func testString(t *testing.T, client IClient) {
 	client.Set(key, "10")
 	sr := client.Get(key)
 	if sr.Value != "10" {
-		t.Error("simple client string set get error")
+		t.Error("string set get error")
 	}
 
 	client.Setex(key, "2", "10")
 	time.Sleep(time.Second * 3)
 	sr = client.Get(key)
 	if sr != nil {
-		t.Error("simple client string set ex error", sr)
+		t.Error("string set ex error", sr)
 	}
 }
 
@@ -56,6 +62,16 @@ func testExpire(t *testing.T, client IClient) {
 	time.Sleep(time.Second * 3)
 	sr := client.Get(key)
 	if sr != nil {
-		t.Error("simple client string set ex error", sr)
+		t.Error("expire error", sr)
+	}
+}
+
+func testDel(t *testing.T, client IClient) {
+	key := "ligang_string:1"
+	client.Set(key, "10")
+	client.Del(key)
+	sr := client.Get(key)
+	if sr != nil {
+		t.Error("hdel error", sr)
 	}
 }

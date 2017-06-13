@@ -29,3 +29,12 @@ func (this *simpleClient) Hgetall(key string) *HashResult {
 
 	return newHashResult(r)
 }
+
+func (this *simpleClient) Hdel(key string, fields ...string) error {
+	r := this.runCmd("HDEL", append([]string{key}, fields...)...)
+	if r.Err != nil {
+		return r.Err
+	}
+
+	return nil
+}
