@@ -55,7 +55,6 @@ func (this *asyncLogRoutine) run() {
 				logAsyncMsg(am)
 			}
 			this.freeCh <- 1
-			return
 		}
 	}
 }
