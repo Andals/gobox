@@ -21,13 +21,15 @@ func InitBufferAutoFlushRoutine(maxBufNum int, timeInterval time.Duration) {
 
 		bufAddCh: make(chan *Buffer, maxBufNum),
 		bufDelCh: make(chan *Buffer, maxBufNum),
+		freeCh:   make(chan int),
 	}
 
 	go bfr.run(timeInterval)
 }
 
 func FreeBuffers() {
-	bfr.flushAll()
+	bfr.freeCh <- 1
+	<-bfr.freeCh
 }
 
 /**
@@ -40,6 +42,7 @@ type bufFlushRoutine struct {
 
 	bufAddCh chan *Buffer
 	bufDelCh chan *Buffer
+	freeCh   chan int
 }
 
 func (this *bufFlushRoutine) addBuffer(buf *Buffer) {
@@ -74,6 +77,10 @@ func (this *bufFlushRoutine) run(timeInterval time.Duration) {
 			buf.buf = nil
 		case <-ticker.C:
 			this.flushAll()
+		case <-this.freeCh:
+			this.flushAll()
+			this.freeCh <- 1
+			return
 		}
 	}
 }
