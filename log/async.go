@@ -8,14 +8,14 @@
 package log
 
 const (
-	ASYNC_MSG_KIND_LOG = 1
-	ASYNC_MSG_KIND_FLUSH = 2
-	ASYNC_MSG_KIND_FREE_LOGGER = 3
+	ASYNC_MSG_KIND_LOG          = 1
+	ASYNC_MSG_KIND_FLUSH        = 2
+	ASYNC_MSG_KIND_FREE_LOGGER  = 3
 	ASYNC_MSG_KIND_FREE_ROUTINE = 4
 )
 
 type asyncMsg struct {
-	kind int
+	kind   int
 	logger ILogger
 
 	level int
@@ -27,16 +27,16 @@ var alr *asyncLogRoutine
 // must be called first
 func InitAsyncLogRoutine(msgQueueLen int) {
 	alr = &asyncLogRoutine{
-		msgCh:   make(chan *asyncMsg, msgQueueLen),
-		freeCh:  make(chan int),
+		msgCh:  make(chan *asyncMsg, msgQueueLen),
+		freeCh: make(chan int),
 	}
 
 	go alr.run()
 }
 
 func FreeAsyncLogRoutine() {
-	alr.msgCh<- &asyncMsg{
-		kind:ASYNC_MSG_KIND_FREE_ROUTINE,
+	alr.msgCh <- &asyncMsg{
+		kind: ASYNC_MSG_KIND_FREE_ROUTINE,
 	}
 	<-alr.freeCh
 }
@@ -46,8 +46,8 @@ func FreeAsyncLogRoutine() {
 * @{ */
 
 type asyncLogRoutine struct {
-	msgCh   chan *asyncMsg
-	freeCh  chan int
+	msgCh  chan *asyncMsg
+	freeCh chan int
 }
 
 func (this *asyncLogRoutine) run() {
@@ -59,7 +59,7 @@ func (this *asyncLogRoutine) run() {
 	}
 }
 
-func(this *asyncLogRoutine)processAsyncMsg(am *asyncMsg) {
+func (this *asyncLogRoutine) processAsyncMsg(am *asyncMsg) {
 	switch am.kind {
 	case ASYNC_MSG_KIND_LOG:
 		am.logger.Log(am.level, am.msg)
@@ -68,7 +68,7 @@ func(this *asyncLogRoutine)processAsyncMsg(am *asyncMsg) {
 	case ASYNC_MSG_KIND_FREE_LOGGER:
 		am.logger.Free()
 	case ASYNC_MSG_KIND_FREE_ROUTINE:
-		this.freeCh<-1
+		this.freeCh <- 1
 	}
 }
 
@@ -124,11 +124,11 @@ func (this *asyncLogger) Emergency(msg []byte) {
 
 func (this *asyncLogger) Log(level int, msg []byte) error {
 	alr.msgCh <- &asyncMsg{
-		kind:ASYNC_MSG_KIND_LOG,
-		logger:this.logger,
+		kind:   ASYNC_MSG_KIND_LOG,
+		logger: this.logger,
 
-		msg:msg,
-		level:level,
+		msg:   msg,
+		level: level,
 	}
 
 	return nil
@@ -136,17 +136,17 @@ func (this *asyncLogger) Log(level int, msg []byte) error {
 
 func (this *asyncLogger) Flush() error {
 	alr.msgCh <- &asyncMsg{
-		kind:ASYNC_MSG_KIND_FLUSH,
-		logger:this.logger,
+		kind:   ASYNC_MSG_KIND_FLUSH,
+		logger: this.logger,
 	}
 
 	return nil
 }
 
 func (this *asyncLogger) Free() {
-	alr.msgCh<-&asyncMsg{
-		kind:ASYNC_MSG_KIND_FREE_LOGGER,
-		logger:this.logger,
+	alr.msgCh <- &asyncMsg{
+		kind:   ASYNC_MSG_KIND_FREE_LOGGER,
+		logger: this.logger,
 	}
 }
 
