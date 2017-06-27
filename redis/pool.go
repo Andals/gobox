@@ -56,6 +56,7 @@ func (this *Pool) Put(client IClient) error {
 		return nil
 	default:
 		client.Free()
+		pItem = nil
 	}
 
 	return errors.New("pool is full")

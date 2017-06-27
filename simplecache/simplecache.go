@@ -88,16 +88,11 @@ func expired(now int64, ci *cacheItem) bool {
 }
 
 func newCacheItem(value interface{}, expire time.Duration) *cacheItem {
-	ex := expire.Nanoseconds()
-	if ex < 0 {
-		ex = NO_EXPIRE
-	}
-
 	now := time.Now()
 
 	return &cacheItem{
 		value:  value,
-		expire: ex,
+		expire: int64(expire),
 
 		setTime:    now,
 		accessTime: now,
