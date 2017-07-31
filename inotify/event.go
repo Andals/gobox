@@ -8,7 +8,8 @@ const (
 
 	IN_MODIFY      = syscall.IN_MODIFY
 	IN_DELETE_SELF = syscall.IN_DELETE_SELF
-)
+	IN_MOVE_SELF = syscall.IN_MOVE_SELF
+ )
 
 type Event struct {
 	mask   uint32
@@ -27,4 +28,8 @@ func (this *Event) InModify() bool {
 
 func (this *Event) InDeleteSelf() bool {
 	return this.mask&IN_DELETE_SELF == IN_DELETE_SELF
+}
+
+func (this *Event) InMoveSelf() bool {
+	return this.mask&IN_MOVE_SELF == IN_MOVE_SELF
 }

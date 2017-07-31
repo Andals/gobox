@@ -8,7 +8,7 @@ import (
 func TestInotify(t *testing.T) {
 	path := "/tmp/a.log"
 	watcher, _ := NewWatcher()
-	watcher.AddWatch(path, IN_MODIFY|IN_DELETE_SELF)
+	watcher.AddWatch(path, IN_ALL_EVENTS)
 
 	for {
 		events, _ := watcher.ReadEvents()
@@ -36,6 +36,10 @@ func showEvent(event *Event) bool {
 
 	if event.InDeleteSelf() {
 		fmt.Println("IN_DELETE_SELF")
+	}
+
+	if event.InMoveSelf() {
+		fmt.Println("IN_MOVE_SELF")
 	}
 
 	return false
