@@ -21,7 +21,7 @@ func TestInotify(t *testing.T) {
 	for {
 		events, _ := watcher.ReadEvents()
 		for _, event := range events {
-			if watcher.IsLastRemainingEvent(event) {
+			if watcher.IsUnreadEvent(event) {
 				fmt.Println("it is a last remaining event")
 			}
 			showEvent(event)

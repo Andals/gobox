@@ -87,7 +87,7 @@ func (this *Watcher) ReadEvents() ([]*Event, error) {
 	return events, nil
 }
 
-func (this *Watcher) IsLastRemainingEvent(event *Event) bool {
+func (this *Watcher) IsUnreadEvent(event *Event) bool {
 	if event.wd != this.pathToWdMap[event.path] {
 		return true
 	}
