@@ -10,24 +10,30 @@ func TestInotify(t *testing.T) {
 	watcher, _ := NewWatcher()
 	watcher.AddWatch(path, IN_ALL_EVENTS)
 
+	events, _ := watcher.ReadEvents()
+	for _, event := range events {
+		showEvent(event)
+	}
+
+	watcher.RmWatch(path)
+	watcher.AddWatch(path, IN_ALL_EVENTS)
+
 	for {
 		events, _ := watcher.ReadEvents()
 		for _, event := range events {
-			quit := showEvent(event)
-			if quit {
-				watcher.RmWatch(path)
-				return
+			if watcher.IsLastRemainingEvent(event) {
+				fmt.Println("it is a last remaining event")
 			}
+			showEvent(event)
 		}
 	}
 }
 
-func showEvent(event *Event) bool {
+func showEvent(event *Event) {
 	fmt.Println(event)
 
 	if event.InIgnored() {
 		fmt.Println("IN_IGNORED")
-		return true
 	}
 
 	if event.InModify() {
@@ -41,6 +47,4 @@ func showEvent(event *Event) bool {
 	if event.InMoveSelf() {
 		fmt.Println("IN_MOVE_SELF")
 	}
-
-	return false
 }

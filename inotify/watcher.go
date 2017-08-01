@@ -8,8 +8,10 @@ import (
 )
 
 type Watcher struct {
-	fd  int
-	wds map[string]uint32
+	fd int
+
+	pathToWdMap map[string]uint32
+	wdToPathMap map[uint32]string
 }
 
 func NewWatcher() (*Watcher, error) {
@@ -19,8 +21,10 @@ func NewWatcher() (*Watcher, error) {
 	}
 
 	return &Watcher{
-		fd:  fd,
-		wds: make(map[string]uint32),
+		fd: fd,
+
+		pathToWdMap: make(map[string]uint32),
+		wdToPathMap: make(map[uint32]string),
 	}, nil
 }
 
@@ -30,18 +34,22 @@ func (this *Watcher) AddWatch(path string, mask uint32) error {
 		return err
 	}
 
-	this.wds[path] = uint32(wd)
+	uwd := uint32(wd)
+	this.pathToWdMap[path] = uwd
+	this.wdToPathMap[uwd] = path
+
 	return nil
 }
 
 func (this *Watcher) RmWatch(path string) {
-	wd, ok := this.wds[path]
+	wd, ok := this.pathToWdMap[path]
 	if !ok {
 		return
 	}
 
 	syscall.InotifyRmWatch(this.fd, wd)
-	delete(this.wds, path)
+	delete(this.pathToWdMap, path)
+	delete(this.wdToPathMap, wd)
 }
 
 func (this *Watcher) ReadEvents() ([]*Event, error) {
@@ -60,9 +68,11 @@ func (this *Watcher) ReadEvents() ([]*Event, error) {
 	for offset <= uint32(n-syscall.SizeofInotifyEvent) {
 		ie := (*syscall.InotifyEvent)(unsafe.Pointer(&buf[offset]))
 		event := &Event{
+			wd:     uint32(ie.Wd),
 			mask:   ie.Mask,
 			cookie: ie.Cookie,
 		}
+		event.path = this.wdToPathMap[event.wd]
 
 		offset += syscall.SizeofInotifyEvent
 		if ie.Len > 0 {
@@ -75,4 +85,12 @@ func (this *Watcher) ReadEvents() ([]*Event, error) {
 	}
 
 	return events, nil
+}
+
+func (this *Watcher) IsLastRemainingEvent(event *Event) bool {
+	if event.wd != this.pathToWdMap[event.path] {
+		return true
+	}
+
+	return false
 }
