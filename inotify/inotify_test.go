@@ -18,7 +18,7 @@ func TestInotify(t *testing.T) {
 	watcher.RmWatch(path)
 	watcher.AddWatch(path, IN_ALL_EVENTS)
 
-	for {
+	for i := 0; i < 5; i++ {
 		events, _ := watcher.ReadEvents()
 		for _, event := range events {
 			if watcher.IsUnreadEvent(event) {
@@ -27,6 +27,9 @@ func TestInotify(t *testing.T) {
 			showEvent(event)
 		}
 	}
+
+	watcher.Free()
+	fmt.Println("bye")
 }
 
 func showEvent(event *Event) {

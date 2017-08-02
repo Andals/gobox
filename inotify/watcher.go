@@ -94,3 +94,10 @@ func (this *Watcher) IsUnreadEvent(event *Event) bool {
 
 	return false
 }
+
+func (this *Watcher) Free() {
+	for path, _ := range this.pathToWdMap {
+		this.RmWatch(path)
+	}
+	syscall.Close(this.fd)
+}
