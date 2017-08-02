@@ -30,7 +30,7 @@ func NewWatcher() (*Watcher, error) {
 
 func (this *Watcher) AddWatch(path string, mask uint32) error {
 	path = strings.TrimRight(path, "/")
-	_,ok:=this.pathToWdMap[path]
+	_, ok := this.pathToWdMap[path]
 	if ok {
 		return nil
 	}

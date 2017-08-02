@@ -2,9 +2,9 @@ package inotify
 
 import (
 	"fmt"
-	"testing"
 	"os"
 	"path/filepath"
+	"testing"
 )
 
 func TestInotify(t *testing.T) {
@@ -16,14 +16,14 @@ func TestInotify(t *testing.T) {
 	<-make(chan bool)
 }
 
-func watch(path string){
+func watch(path string) {
 	watcher, _ := NewWatcher()
 	watcher.AddWatch(path, IN_ALL_EVENTS)
 	watcher.AddWatch(filepath.Dir(path), IN_ALL_EVENTS)
 
 	events, _ := watcher.ReadEvents()
 	for _, event := range events {
-		showEvent(event,watcher.fd)
+		showEvent(event, watcher.fd)
 	}
 
 	os.OpenFile(path, os.O_RDONLY, 0)
@@ -36,7 +36,7 @@ func watch(path string){
 			if watcher.IsUnreadEvent(event) {
 				fmt.Println("it is a last remaining event")
 			}
-			showEvent(event,watcher.fd)
+			showEvent(event, watcher.fd)
 		}
 	}
 
@@ -56,18 +56,18 @@ func showEvent(event *Event, fd int) {
 	}
 
 	if event.InDeleteSelf() {
-		fmt.Println(fd, event.wd,"IN_DELETE_SELF")
+		fmt.Println(fd, event.wd, "IN_DELETE_SELF")
 	}
 
 	if event.InMoveSelf() {
-		fmt.Println(fd, event.wd,"IN_MOVE_SELF")
+		fmt.Println(fd, event.wd, "IN_MOVE_SELF")
 	}
 
-	if event.InDelete(){
-		fmt.Println(fd, event.wd,"IN_DELETE")
+	if event.InDelete() {
+		fmt.Println(fd, event.wd, "IN_DELETE")
 	}
 
 	if event.InAttrib() {
-		fmt.Println(fd, event.wd,"IN_ATTRIB")
+		fmt.Println(fd, event.wd, "IN_ATTRIB")
 	}
 }
