@@ -9,14 +9,17 @@ const (
 	IN_MODIFY      = syscall.IN_MODIFY
 	IN_DELETE_SELF = syscall.IN_DELETE_SELF
 	IN_MOVE_SELF   = syscall.IN_MOVE_SELF
+
+	IN_DELETE = syscall.IN_DELETE
+	IN_ATTRIB = syscall.IN_ATTRIB
 )
 
 type Event struct {
 	wd     uint32
 	mask   uint32
 	cookie uint32
-	path   string
 
+	Path string
 	Name string
 }
 
@@ -34,4 +37,12 @@ func (this *Event) InDeleteSelf() bool {
 
 func (this *Event) InMoveSelf() bool {
 	return this.mask&IN_MOVE_SELF == IN_MOVE_SELF
+}
+
+func (this *Event) InDelete() bool {
+	return this.mask&IN_DELETE == IN_DELETE
+}
+
+func (this *Event) InAttrib() bool {
+	return this.mask&IN_ATTRIB == IN_ATTRIB
 }

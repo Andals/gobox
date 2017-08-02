@@ -29,6 +29,12 @@ func NewWatcher() (*Watcher, error) {
 }
 
 func (this *Watcher) AddWatch(path string, mask uint32) error {
+	path = strings.TrimRight(path, "/")
+	_,ok:=this.pathToWdMap[path]
+	if ok {
+		return nil
+	}
+
 	wd, err := syscall.InotifyAddWatch(this.fd, path, mask)
 	if err != nil {
 		return err
@@ -42,6 +48,7 @@ func (this *Watcher) AddWatch(path string, mask uint32) error {
 }
 
 func (this *Watcher) RmWatch(path string) {
+	path = strings.TrimRight(path, "/")
 	wd, ok := this.pathToWdMap[path]
 	if !ok {
 		return
@@ -72,7 +79,7 @@ func (this *Watcher) ReadEvents() ([]*Event, error) {
 			mask:   ie.Mask,
 			cookie: ie.Cookie,
 		}
-		event.path = this.wdToPathMap[event.wd]
+		event.Path = this.wdToPathMap[event.wd]
 
 		offset += syscall.SizeofInotifyEvent
 		if ie.Len > 0 {
@@ -88,7 +95,7 @@ func (this *Watcher) ReadEvents() ([]*Event, error) {
 }
 
 func (this *Watcher) IsUnreadEvent(event *Event) bool {
-	if event.wd != this.pathToWdMap[event.path] {
+	if event.wd != this.pathToWdMap[event.Path] {
 		return true
 	}
 
