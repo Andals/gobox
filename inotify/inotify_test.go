@@ -4,19 +4,27 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 )
 
 func TestInotify(t *testing.T) {
 	path := "/tmp/a.log"
 
-	go watch(path)
-	go watch(path)
+	wg := new(sync.WaitGroup)
 
-	<-make(chan bool)
+	wg.Add(1)
+	go watch(path, wg)
+
+	wg.Add(1)
+	go watch(path, wg)
+
+	wg.Wait()
 }
 
-func watch(path string) {
+func watch(path string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	watcher, _ := NewWatcher()
 	watcher.AddWatch(path, IN_ALL_EVENTS)
 	watcher.AddWatch(filepath.Dir(path), IN_ALL_EVENTS)
@@ -51,23 +59,32 @@ func showEvent(event *Event, fd int) {
 		fmt.Println(fd, event.wd, "IN_IGNORED")
 	}
 
-	if event.InModify() {
-		fmt.Println(fd, event.wd, "IN_MODIFY")
+	if event.InAttrib() {
+		fmt.Println(fd, event.wd, "IN_ATTRIB")
 	}
 
-	if event.InDeleteSelf() {
-		fmt.Println(fd, event.wd, "IN_DELETE_SELF")
+	if event.InModify() {
+		fmt.Println(fd, event.wd, "IN_MODIFY")
 	}
 
 	if event.InMoveSelf() {
 		fmt.Println(fd, event.wd, "IN_MOVE_SELF")
 	}
 
+	if event.InMovedFrom() {
+		fmt.Println(fd, event.wd, "IN_MOVED_FROM")
+	}
+
+	if event.InMovedTo() {
+		fmt.Println(fd, event.wd, "IN_MOVED_TO")
+	}
+
+	if event.InDeleteSelf() {
+		fmt.Println(fd, event.wd, "IN_DELETE_SELF")
+	}
+
 	if event.InDelete() {
 		fmt.Println(fd, event.wd, "IN_DELETE")
 	}
 
-	if event.InAttrib() {
-		fmt.Println(fd, event.wd, "IN_ATTRIB")
-	}
 }
