@@ -15,6 +15,8 @@ const (
 
 	IN_DELETE_SELF = syscall.IN_DELETE_SELF
 	IN_DELETE      = syscall.IN_DELETE
+
+	IN_CREATE = syscall.IN_CREATE
 )
 
 type Event struct {
@@ -56,4 +58,8 @@ func (this *Event) InDeleteSelf() bool {
 
 func (this *Event) InDelete() bool {
 	return this.mask&IN_DELETE == IN_DELETE
+}
+
+func (this *Event) InCreate() bool {
+	return this.mask&IN_CREATE == IN_CREATE
 }

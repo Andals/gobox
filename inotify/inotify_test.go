@@ -87,4 +87,7 @@ func showEvent(event *Event, fd int) {
 		fmt.Println(fd, event.wd, "IN_DELETE")
 	}
 
+	if event.InCreate() {
+		fmt.Println(fd, event.wd, "IN_CREATE")
+	}
 }

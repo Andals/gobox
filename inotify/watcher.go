@@ -2,6 +2,7 @@ package inotify
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -87,6 +88,7 @@ func (this *Watcher) ReadEvents() ([]*Event, error) {
 			event.Name = strings.TrimRight(string(nameBytes[0:ie.Len]), "\000")
 			offset += ie.Len
 		}
+		fmt.Println(event)
 
 		events = append(events, event)
 	}
