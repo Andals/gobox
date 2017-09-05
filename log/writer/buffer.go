@@ -9,22 +9,30 @@ package writer
 
 import (
 	"bufio"
+	"sync"
 	"time"
 )
 
 var bfr *bufFlushRoutine
+var bfrInitMutex sync.Mutex
 
 // must be called first
 func InitBufferAutoFlushRoutine(maxBufNum int, timeInterval time.Duration) {
-	bfr = &bufFlushRoutine{
-		buffers: make(map[uint64]*Buffer),
+	bfrInitMutex.Lock()
 
-		bufAddCh: make(chan *Buffer, maxBufNum),
-		bufDelCh: make(chan *Buffer, maxBufNum),
-		freeCh:   make(chan int),
+	if bfr == nil {
+		bfr = &bufFlushRoutine{
+			buffers: make(map[uint64]*Buffer),
+
+			bufAddCh: make(chan *Buffer, maxBufNum),
+			bufDelCh: make(chan *Buffer, maxBufNum),
+			freeCh:   make(chan int),
+		}
+
+		go bfr.run(timeInterval)
 	}
 
-	go bfr.run(timeInterval)
+	bfrInitMutex.Unlock()
 }
 
 func FreeBuffers() {
