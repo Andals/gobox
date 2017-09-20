@@ -48,7 +48,7 @@ func (this *simpleClient) Free() {
 	this.logger.Free()
 }
 
-func (this *simpleClient) runCmd(cmd string, args ...string) *redis.Reply {
+func (this *simpleClient) RunCmd(cmd string, args ...string) *redis.Reply {
 	cmdBytes := []byte(cmd)
 	for _, s := range args {
 		cmdBytes = misc.AppendBytes(cmdBytes, []byte(" "), []byte(s))
@@ -78,7 +78,7 @@ func (this *simpleClient) runCmd(cmd string, args ...string) *redis.Reply {
 }
 
 func (this *simpleClient) Expire(key, seconds string) error {
-	r := this.runCmd("EXPIRE", key, seconds)
+	r := this.RunCmd("EXPIRE", key, seconds)
 	if r.Err != nil {
 		return r.Err
 	}
@@ -87,7 +87,7 @@ func (this *simpleClient) Expire(key, seconds string) error {
 }
 
 func (this *simpleClient) Del(key string) error {
-	r := this.runCmd("DEL", key)
+	r := this.RunCmd("DEL", key)
 	if r.Err != nil {
 		return r.Err
 	}

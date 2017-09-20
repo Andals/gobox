@@ -2,7 +2,6 @@ package encoding
 
 import (
 	"encoding/base64"
-	"io/ioutil"
 )
 
 func Base64Encode(data []byte) []byte {

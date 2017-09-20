@@ -35,6 +35,7 @@ type IClient interface {
 	Hget(key, field string) *StringResult
 	Hgetall(key string) *HashResult
 	Hdel(key string, fields ...string) error
+	RunCmd(key string, fields ...string) error
 }
 
 func newStringResult(r *redis.Reply) *StringResult {
