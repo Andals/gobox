@@ -1,7 +1,8 @@
 package client
 
 import (
-	"andals/gobox/log"
+	"andals/golog"
+
 	"bytes"
 	"io/ioutil"
 	"net"
@@ -12,7 +13,7 @@ import (
 )
 
 type Client struct {
-	logger log.ILogger
+	logger golog.ILogger
 
 	c *http.Client
 }
@@ -24,12 +25,12 @@ type Response struct {
 	*http.Response
 }
 
-func NewClient(logger log.ILogger) *Client {
+func NewClient(logger golog.ILogger) *Client {
 	this := new(Client)
 
 	this.logger = logger
 	if this.logger == nil {
-		this.logger = new(log.NoopLogger)
+		this.logger = new(golog.NoopLogger)
 	}
 
 	this.c = new(http.Client)

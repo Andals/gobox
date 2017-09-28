@@ -1,8 +1,8 @@
 package client
 
 import (
-	"andals/gobox/log"
-	logWriter "andals/gobox/log/writer"
+	"andals/golog"
+
 	"fmt"
 	"testing"
 	"time"
@@ -10,8 +10,8 @@ import (
 
 func TestClientGet(t *testing.T) {
 	path := "/tmp/test_http_client.log"
-	w, _ := logWriter.NewFileWriter(path)
-	logger, _ := log.NewSimpleLogger(w, log.LEVEL_INFO, nil)
+	w, _ := golog.NewFileWriter(path)
+	logger, _ := golog.NewSimpleLogger(w, golog.LEVEL_INFO, nil)
 
 	client := NewClient(logger).
 		SetTimeout(time.Second * 3).
@@ -20,12 +20,12 @@ func TestClientGet(t *testing.T) {
 		"GO-CLIENT-1": "gobox-httpclient-1",
 		"GO-CLIENT-2": "gobox-httpclient-2",
 	}
-	req, _ := NewRequestForGet("http://www.vdocker.com/test.php", "127.0.0.1", extHeaders)
+	req, _ := NewRequestForGet("http://www.vmc7.com/test.php", "127.0.0.1", extHeaders)
 
 	resp, err := client.Do(req, 1)
 	fmt.Println(string(resp.Contents), resp.T.String(), err)
 
-	req, _ = NewRequestForGet("http://www.vdocker.com/index.html", "127.0.0.1", extHeaders)
+	req, _ = NewRequestForGet("http://www.vmc7.com/index.html", "127.0.0.1", extHeaders)
 
 	resp, err = client.Do(req, 1)
 	fmt.Println(string(resp.Contents), resp.T.String(), err)

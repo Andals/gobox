@@ -1,77 +1,45 @@
 package redis
 
 import (
+	"andals/golog"
+
 	"testing"
-	"time"
 )
 
-func testHash(t *testing.T, client IClient) {
-	key := "ligang_hash:1"
-	client.Hset(key, "2017-05-01", "10")
-	client.Hmset(key, "2017-05-02", "3", "2017-05-03", "4", "2017-05-04", "5")
+func TestClient(t *testing.T) {
+	w, _ := golog.NewFileWriter("/tmp/test_redis.log")
+	logger, _ := golog.NewSimpleLogger(w, golog.LEVEL_INFO, golog.NewSimpleFormater())
 
-	sr := client.Hget(key, "2017-05-01")
-	if sr.Value != "10" {
-		t.Error("str must be equal 10")
+	config := &Config{
+		Host: "127.0.0.1",
+		Port: "6379",
+		Pass: "123",
 	}
+	client, _ := NewClient(config, logger)
 
-	client.Hdel(key, "2017-05-01")
-	sr = client.Hget(key, "2017-05-01")
-	if sr != nil {
-		t.Error("HDEL error")
-	}
+	reply, _ := client.Do("set", "a", "1")
+	t.Log(reply.String())
+	reply, _ = client.Do("get", "a")
+	t.Log(reply.Int())
 
-	om := map[string]string{
-		"2017-05-01": "10",
-		"2017-05-02": "3",
-		"2017-05-03": "4",
-		"2017-05-04": "5",
-	}
-	mr := client.Hgetall(key)
-	for k, v := range mr.Value {
-		ov, ok := om[k]
-		if !ok {
-			t.Error("key: " + k + " not exists")
-		}
-		if ov != v {
-			t.Error("key: " + k + " value: " + v + " not equal ov: " + ov)
-		}
-	}
-}
-
-func testString(t *testing.T, client IClient) {
-	key := "ligang_string:1"
-	client.Set(key, "10")
-	sr := client.Get(key)
-	if sr.Value != "10" {
-		t.Error("string set get error")
+	client.Send("set", "a", "a")
+	client.Send("set", "b", "b")
+	client.Send("get", "a")
+	client.Send("get", "b")
+	replies, _ := client.ExecPipelining()
+	for _, reply := range replies {
+		t.Log(reply.String())
 	}
 
-	client.Setex(key, "2", "10")
-	time.Sleep(time.Second * 3)
-	sr = client.Get(key)
-	if sr != nil {
-		t.Error("string set ex error", sr)
+	client.BeginTrans()
+	client.Send("set", "a", "1")
+	client.Send("set", "b", "2")
+	client.Send("get", "a")
+	client.Send("get", "b")
+	replies, _ = client.ExecTrans()
+	for _, reply := range replies {
+		t.Log(reply.String())
 	}
-}
 
-func testExpire(t *testing.T, client IClient) {
-	key := "ligang_string:1"
-	client.Set(key, "10")
-	client.Expire(key, "2")
-	time.Sleep(time.Second * 3)
-	sr := client.Get(key)
-	if sr != nil {
-		t.Error("expire error", sr)
-	}
-}
-
-func testDel(t *testing.T, client IClient) {
-	key := "ligang_string:1"
-	client.Set(key, "10")
-	client.Del(key)
-	sr := client.Get(key)
-	if sr != nil {
-		t.Error("hdel error", sr)
-	}
+	client.Free()
 }

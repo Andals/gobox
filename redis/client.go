@@ -1,95 +1,126 @@
 package redis
 
 import (
-	"github.com/fzzy/radix/redis"
+	"github.com/garyburd/redigo/redis"
 
-	"andals/gobox/log"
+	"andals/golog"
 
-	"time"
+	"fmt"
 )
 
-type StringResult struct {
-	Value string
-	Err   error
+type Client struct {
+	config *Config
+	logger golog.ILogger
+
+	conn redis.Conn
 }
 
-type HashResult struct {
-	Value map[string]string
-	Err   error
-}
-
-type IClient interface {
-	SetLogger(logger log.ILogger)
-	Free()
-
-	Expire(key, seconds string) error
-	Del(key string) error
-
-	//args：[EX seconds] [PX milliseconds] [NX|XX]
-	Set(key, value string, args ...string) error
-	Setex(key, seconds, value string) error
-	Get(key string) *StringResult
-
-	Hset(key, field, value string) error
-	Hmset(key string, fieldValuePairs ...string) error
-	Hget(key, field string) *StringResult
-	Hgetall(key string) *HashResult
-	Hdel(key string, fields ...string) error
-	RunCmd(key string, fields ...string) *redis.Reply
-}
-
-func newStringResult(r *redis.Reply) *StringResult {
-	if r.Type == redis.NilReply {
-		return nil
+func NewClient(config *Config, logger golog.ILogger) (*Client, error) {
+	if config.LogLevel == 0 {
+		config.LogLevel = golog.LEVEL_INFO
 	}
 
-	result := new(StringResult)
-	if r.Err != nil {
-		result.Err = r.Err
-		return result
+	options := []redis.DialOption{
+		redis.DialConnectTimeout(config.ConnectTimeout),
+		redis.DialReadTimeout(config.ReadTimeout),
+		redis.DialWriteTimeout(config.WriteTimeout),
 	}
 
-	var err error
-	result.Value, err = r.Str()
+	conn, err := redis.Dial("tcp", config.Host+":"+config.Port, options...)
 	if err != nil {
-		result.Err = err
+		return nil, err
 	}
-
-	return result
-}
-
-func newHashResult(r *redis.Reply) *HashResult {
-	if r.Type == redis.NilReply {
-		return nil
-	}
-
-	result := new(HashResult)
-	if r.Err != nil {
-		result.Err = r.Err
-		return result
-	}
-
-	var err error
-	result.Value, err = r.Hash()
+	_, err = conn.Do("auth", config.Pass)
 	if err != nil {
-		result.Err = err
+		return nil, err
 	}
 
-	return result
+	if logger == nil {
+		logger = new(golog.NoopLogger)
+	}
+
+	return &Client{
+		config: config,
+		logger: logger,
+
+		conn: conn,
+	}, nil
 }
 
-func newRedisClient(network, addr, pass string, timeout time.Duration) (*redis.Client, error) {
-	client, e := redis.DialTimeout(network, addr, timeout)
-	if e != nil {
-		return nil, e
+func (this *Client) SetLogger(logger golog.ILogger) {
+	this.logger = logger
+}
+
+func (this *Client) Free() {
+	this.logger.Free()
+	this.conn.Close()
+}
+
+func (this *Client) Do(cmd string, args ...interface{}) (*Reply, error) {
+	this.log(cmd, args...)
+
+	reply, err := this.conn.Do(cmd, args...)
+	if err != nil {
+		return nil, err
+	}
+	if reply == nil {
+		return nil, nil
 	}
 
-	r := client.Cmd("AUTH", pass)
-	if r.Err != nil {
-		client.Close()
+	return &Reply{reply}, nil
+}
 
-		return nil, r.Err
+func (this *Client) Send(cmd string, args ...interface{}) error {
+	this.log(cmd, args...)
+
+	return this.conn.Send(cmd, args...)
+}
+
+func (this *Client) ExecPipelining() ([]*Reply, error) {
+	return this.multiDo("")
+}
+
+func (this *Client) BeginTrans() error {
+	cmd := "multi"
+	this.log(cmd)
+
+	return this.conn.Send(cmd)
+}
+
+func (this *Client) DiscardTrans() error {
+	cmd := "discard"
+	this.log(cmd)
+
+	_, err := this.conn.Do(cmd)
+	return err
+}
+
+func (this *Client) ExecTrans() ([]*Reply, error) {
+	cmd := "exec"
+	this.log(cmd)
+
+	return this.multiDo(cmd)
+}
+
+func (this *Client) log(cmd string, args ...interface{}) {
+	for _, arg := range args {
+		cmd += " " + fmt.Sprint(arg)
 	}
 
-	return client, nil
+	this.logger.Log(this.config.LogLevel, []byte(cmd))
+}
+
+func (this *Client) multiDo(cmd string) ([]*Reply, error) {
+	r, err := this.conn.Do(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	rs := r.([]interface{})
+	replies := make([]*Reply, len(rs))
+	for i, v := range rs {
+		replies[i] = &Reply{v}
+	}
+
+	return replies, nil
 }
