@@ -42,6 +42,10 @@ func NewClient(config *Config, logger golog.ILogger) (*Client, error) {
 	}, nil
 }
 
+func (this *Client) SetLogger(logger golog.ILogger) {
+	this.logger = logger
+}
+
 func (this *Client) Free() {
 	this.db.Close()
 	this.tx = nil
