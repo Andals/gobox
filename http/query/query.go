@@ -31,6 +31,10 @@ func (this *QuerySet) StringVar(p *string, name string, errno int, msg string, c
 	this.Var(name, NewStringValue(p, errno, msg, cf))
 }
 
+func (this *QuerySet) Int64Var(p *int64, name string, errno int, msg string, cf CheckInt64) {
+	this.Var(name, NewInt64Value(p, errno, msg, cf))
+}
+
 func (this *QuerySet) Parse(actual *url.Values) *exception.Exception {
 	for name, v := range this.formal {
 		str := strings.TrimSpace(actual.Get(name))

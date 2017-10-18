@@ -130,3 +130,60 @@ func (this *stringValue) Check() bool {
 }
 
 /**  @} */
+
+/**
+* @name int64Value
+* @{ */
+
+type CheckInt64 func(v int64) bool
+
+type int64Value struct {
+	*baseValue
+
+	p  *int64
+	cf CheckInt64
+}
+
+func NewInt64Value(p *int64, errno int, msg string, cf CheckInt64) *int64Value {
+	this := &int64Value{
+		baseValue: newBaseValue(errno, msg),
+
+		p: p,
+	}
+
+	if cf == nil {
+		this.cf = func(v int64) bool {
+			if v == 0 {
+				return false
+			}
+			return true
+		}
+	} else {
+		this.cf = cf
+	}
+
+	return this
+}
+
+func (this *int64Value) Set(str string) error {
+	var v int64 = 0
+	var e error = nil
+
+	if str != "" {
+		v, e = strconv.ParseInt(str, 10, 64)
+	}
+
+	if e != nil {
+		return e
+	}
+
+	*(this.p) = v
+
+	return nil
+}
+
+func (this *int64Value) Check() bool {
+	return this.cf(*(this.p))
+}
+
+/**  @} */
