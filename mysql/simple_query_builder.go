@@ -175,7 +175,7 @@ func (this *SimpleQueryBuilder) HavingConditionOr(condItems ...*ColQueryItem) *S
 	return this
 }
 
-func (this *SimpleQueryBuilder) Limit(offset, rowCnt int) *SimpleQueryBuilder {
+func (this *SimpleQueryBuilder) Limit(offset int64, rowCnt int) *SimpleQueryBuilder {
 	if rowCnt <= 0 || offset < 0 {
 		return this
 	}
