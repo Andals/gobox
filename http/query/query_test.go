@@ -18,14 +18,16 @@ func TestParse(t *testing.T) {
 	var b string
 	var c int64
 
-	qs.IntVar(&a, "a", 101, "invalid a", CheckIntNotZero)
-	qs.StringVar(&b, "b", 102, "invalid b", CheckStringNotEmpty)
-	qs.Int64Var(&c, "c", 103, "invalid c", CheckInt64NotZero)
+	qs.IntVar(&a, true, "a", 101, "invalid a", CheckIntNotZero)
+	qs.StringVar(&b, true, "b", 102, "invalid b", CheckStringNotEmpty)
+	qs.Int64Var(&c, false, "c", 103, "invalid c", CheckInt64NotZero)
 
-	e := qs.Parse(&qv)
+	e := qs.Parse(qv)
 	if e != nil {
 		fmt.Println(e.Error())
 	} else {
 		fmt.Println(a, b, c)
 	}
+
+	fmt.Println(qs.ExistsInfo())
 }

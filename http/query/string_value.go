@@ -16,9 +16,9 @@ type stringValue struct {
 	cf CheckString
 }
 
-func NewStringValue(p *string, errno int, msg string, cf CheckString) *stringValue {
+func NewStringValue(p *string, required bool, errno int, msg string, cf CheckString) *stringValue {
 	this := &stringValue{
-		baseValue: newBaseValue(errno, msg),
+		baseValue: newBaseValue(required, errno, msg),
 
 		p:  p,
 		cf: cf,

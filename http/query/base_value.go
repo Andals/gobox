@@ -5,21 +5,28 @@ import (
 )
 
 type Value interface {
+	Required() bool
 	Set(str string) error
 	Check() bool
 	Error() *exception.Exception
 }
 
 type baseValue struct {
-	errno int
-	msg   string
+	required bool
+	errno    int
+	msg      string
 }
 
-func newBaseValue(errno int, msg string) *baseValue {
+func newBaseValue(required bool, errno int, msg string) *baseValue {
 	return &baseValue{
-		errno: errno,
-		msg:   msg,
+		required: required,
+		errno:    errno,
+		msg:      msg,
 	}
+}
+
+func (this *baseValue) Required() bool {
+	return this.required
 }
 
 func (this *baseValue) Error() *exception.Exception {

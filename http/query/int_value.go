@@ -18,9 +18,9 @@ type intValue struct {
 	cf CheckInt
 }
 
-func NewIntValue(p *int, errno int, msg string, cf CheckInt) *intValue {
+func NewIntValue(p *int, required bool, errno int, msg string, cf CheckInt) *intValue {
 	this := &intValue{
-		baseValue: newBaseValue(errno, msg),
+		baseValue: newBaseValue(required, errno, msg),
 
 		p:  p,
 		cf: cf,

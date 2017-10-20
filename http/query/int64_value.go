@@ -18,9 +18,9 @@ type int64Value struct {
 	cf CheckInt64
 }
 
-func NewInt64Value(p *int64, errno int, msg string, cf CheckInt64) *int64Value {
+func NewInt64Value(p *int64, required bool, errno int, msg string, cf CheckInt64) *int64Value {
 	this := &int64Value{
-		baseValue: newBaseValue(errno, msg),
+		baseValue: newBaseValue(required, errno, msg),
 
 		p:  p,
 		cf: cf,
