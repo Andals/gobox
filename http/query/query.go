@@ -40,19 +40,19 @@ func (this *QuerySet) Var(name string, v Value) *QuerySet {
 	return this
 }
 
-func (this *QuerySet) IntVar(p *int, required bool, name string, errno int, msg string, cf CheckInt) *QuerySet {
+func (this *QuerySet) IntVar(p *int, name string, required bool, errno int, msg string, cf CheckInt) *QuerySet {
 	this.Var(name, NewIntValue(p, required, errno, msg, cf))
 
 	return this
 }
 
-func (this *QuerySet) StringVar(p *string, required bool, name string, errno int, msg string, cf CheckString) *QuerySet {
+func (this *QuerySet) StringVar(p *string, name string, required bool, errno int, msg string, cf CheckString) *QuerySet {
 	this.Var(name, NewStringValue(p, required, errno, msg, cf))
 
 	return this
 }
 
-func (this *QuerySet) Int64Var(p *int64, required bool, name string, errno int, msg string, cf CheckInt64) *QuerySet {
+func (this *QuerySet) Int64Var(p *int64, name string, required bool, errno int, msg string, cf CheckInt64) *QuerySet {
 	this.Var(name, NewInt64Value(p, required, errno, msg, cf))
 
 	return this
