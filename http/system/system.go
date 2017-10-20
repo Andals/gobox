@@ -1,11 +1,11 @@
 package system
 
 import (
-	"net/http"
-	"reflect"
-
 	"andals/gobox/http/controller"
 	"andals/gobox/http/router"
+
+	"net/http"
+	"reflect"
 )
 
 type System struct {
@@ -36,14 +36,13 @@ func (this *System) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			ji.jf(context, ji.args...)
 		}
 
+		w.Write(context.ResponseBody())
 		route.Cl.Destruct(context)
 	}()
 
 	route.Cl.BeforeAction(context)
 	route.ActionValue.Call(this.makeArgsValues(context, route.Args))
 	route.Cl.AfterAction(context)
-
-	w.Write(context.ResponseBody())
 }
 
 func (this *System) makeArgsValues(context controller.ActionContext, args []string) []reflect.Value {
