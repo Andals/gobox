@@ -2,6 +2,7 @@ package query
 
 import (
 	"andals/gobox/exception"
+	"andals/gobox/misc"
 
 	"net/url"
 	"strings"
@@ -9,7 +10,7 @@ import (
 
 type QuerySet struct {
 	formal map[string]Value
-	exists map[string]bool
+	exists misc.BoolSet
 }
 
 func NewQuerySet() *QuerySet {
@@ -21,17 +22,12 @@ func NewQuerySet() *QuerySet {
 	return this
 }
 
-func (this *QuerySet) ExistsInfo() map[string]bool {
+func (this *QuerySet) ExistsInfo() misc.BoolSet {
 	return this.exists
 }
 
 func (this *QuerySet) Exist(name string) bool {
-	exist, ok := this.exists[name]
-	if !ok || exist == false {
-		return false
-	}
-
-	return true
+	return this.exists.IsTrue(name)
 }
 
 func (this *QuerySet) Var(name string, v Value) *QuerySet {
