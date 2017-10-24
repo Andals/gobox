@@ -60,7 +60,6 @@ func (this *QuerySet) Int64Var(p *int64, name string, required bool, errno int, 
 func (this *QuerySet) Parse(actual url.Values) *exception.Exception {
 	for name, v := range this.formal {
 		if len(actual[name]) == 0 {
-			this.exists[name] = false
 			if v.Required() {
 				return v.Error()
 			}

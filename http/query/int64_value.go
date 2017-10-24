@@ -4,11 +4,11 @@ import "strconv"
 
 type CheckInt64 func(v int64) bool
 
-func CheckInt64NotZero(v int64) bool {
-	if v == 0 {
-		return false
+func CheckInt64IsPositive(v int64) bool {
+	if v > 0 {
+		return true
 	}
-	return true
+	return false
 }
 
 type int64Value struct {

@@ -4,11 +4,11 @@ import "strconv"
 
 type CheckInt func(v int) bool
 
-func CheckIntNotZero(v int) bool {
-	if v == 0 {
-		return false
+func CheckIntIsPositive(v int) bool {
+	if v > 0 {
+		return true
 	}
-	return true
+	return false
 }
 
 type intValue struct {

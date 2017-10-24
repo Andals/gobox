@@ -18,9 +18,9 @@ func TestParse(t *testing.T) {
 	var b string
 	var c int64
 
-	qs.IntVar(&a, "a", true, 101, "invalid a", CheckIntNotZero)
+	qs.IntVar(&a, "a", true, 101, "invalid a", CheckIntIsPositive)
 	qs.StringVar(&b, "b", true, 102, "invalid b", CheckStringNotEmpty)
-	qs.Int64Var(&c, "c", false, 103, "invalid c", CheckInt64NotZero)
+	qs.Int64Var(&c, "c", false, 103, "invalid c", CheckInt64IsPositive)
 
 	e := qs.Parse(qv)
 	if e != nil {

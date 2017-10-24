@@ -6,6 +6,15 @@ type Reply struct {
 	reply interface{}
 }
 
+func (this *Reply) ArrReplyIsNil() bool {
+	v, _ := redis.Values(this.reply, nil)
+	if len(v) == 0 {
+		return true
+	}
+
+	return false
+}
+
 func (this *Reply) Bool() (bool, error) {
 	return redis.Bool(this.reply, nil)
 }
