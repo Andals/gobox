@@ -24,7 +24,7 @@ func testPool(pool *Pool, t *testing.T) {
 	client, _ := pool.Get()
 	row := client.QueryRow("SELECT * FROM demo WHERE id = ?", 1)
 	item := new(tableDemoRowItem)
-	err := row.Scan(&item.Id, &item.AddTime, &item.EditTime, &item.Name)
+	err := row.Scan(&item.Id, &item.AddTime, &item.EditTime, &item.Name, &item.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			t.Log("no rows: " + err.Error())

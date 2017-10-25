@@ -10,10 +10,11 @@ import (
 )
 
 type tableDemoRowItem struct {
-	Id       int
+	Id       int64
 	AddTime  string
 	EditTime string
 	Name     string
+	Status   int
 }
 
 var client *Client
@@ -55,7 +56,7 @@ func TestClientQuery(t *testing.T) {
 	} else {
 		for rows.Next() {
 			item := new(tableDemoRowItem)
-			err = rows.Scan(&item.Id, &item.AddTime, &item.EditTime, &item.Name)
+			err = rows.Scan(&item.Id, &item.AddTime, &item.EditTime, &item.Name, &item.Status)
 			if err != nil {
 				t.Log("rows scan error: " + err.Error())
 			} else {
@@ -70,7 +71,7 @@ func TestClientQueryRow(t *testing.T) {
 
 	row := client.QueryRow("SELECT * FROM demo WHERE id = ?", 5)
 	item := new(tableDemoRowItem)
-	err := row.Scan(&item.Id, &item.AddTime, &item.EditTime, &item.Name)
+	err := row.Scan(&item.Id, &item.AddTime, &item.EditTime, &item.Name, &item.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			t.Log("no rows: " + err.Error())
@@ -89,7 +90,7 @@ func TestClientTrans(t *testing.T) {
 
 	row := client.QueryRow("SELECT * FROM demo WHERE id = ?", 1)
 	item := new(tableDemoRowItem)
-	err := row.Scan(&item.Id, &item.AddTime, &item.EditTime, &item.Name)
+	err := row.Scan(&item.Id, &item.AddTime, &item.EditTime, &item.Name, &item.Status)
 	if err != nil {
 		t.Log("row scan error: " + err.Error())
 	} else {
