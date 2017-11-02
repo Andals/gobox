@@ -15,6 +15,8 @@ type Client struct {
 	db *sql.DB
 	tx *sql.Tx
 
+	connClosed bool
+
 	logger golog.ILogger
 }
 
@@ -46,10 +48,14 @@ func (this *Client) SetLogger(logger golog.ILogger) {
 	this.logger = logger
 }
 
+func (this *Client) Closed() bool {
+	return this.connClosed
+}
+
 func (this *Client) Free() {
 	this.db.Close()
 	this.tx = nil
-	this.logger.Free()
+	this.connClosed = true
 }
 
 func (this *Client) Exec(query string, args ...interface{}) (sql.Result, error) {

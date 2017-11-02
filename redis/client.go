@@ -15,7 +15,8 @@ type Client struct {
 	logger golog.ILogger
 	clff   CmdLogFmtFunc
 
-	conn redis.Conn
+	conn       redis.Conn
+	connClosed bool
 }
 
 func NewClient(config *Config, logger golog.ILogger) (*Client, error) {
@@ -65,9 +66,13 @@ func (this *Client) SetCmdLogFmtFunc(clff CmdLogFmtFunc) *Client {
 	return this
 }
 
+func (this *Client) Closed() bool {
+	return this.connClosed
+}
+
 func (this *Client) Free() {
-	this.logger.Free()
 	this.conn.Close()
+	this.connClosed = true
 }
 
 func (this *Client) Do(cmd string, args ...interface{}) (*Reply, error) {

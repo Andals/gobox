@@ -37,12 +37,12 @@ func (this *System) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Write(context.ResponseBody())
-		route.Cl.Destruct(context)
+		context.Destruct()
 	}()
 
-	route.Cl.BeforeAction(context)
+	context.BeforeAction()
 	route.ActionValue.Call(this.makeArgsValues(context, route.Args))
-	route.Cl.AfterAction(context)
+	context.AfterAction()
 }
 
 func (this *System) makeArgsValues(context controller.ActionContext, args []string) []reflect.Value {

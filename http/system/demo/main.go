@@ -5,6 +5,7 @@ import (
 	"andals/gobox/http/gracehttp"
 	"andals/gobox/http/router"
 	"andals/gobox/http/system"
+
 	"net/http"
 )
 
@@ -20,56 +21,68 @@ func main() {
 	gracehttp.ListenAndServe(":8001", sys)
 }
 
-type DemoActionContext struct {
+type BaseActionContext struct {
 	Req        *http.Request
 	RespWriter http.ResponseWriter
 	RespBody   []byte
 }
 
-func (this *DemoActionContext) Request() *http.Request {
+func (this *BaseActionContext) Request() *http.Request {
 	return this.Req
 }
 
-func (this *DemoActionContext) ResponseWriter() http.ResponseWriter {
+func (this *BaseActionContext) ResponseWriter() http.ResponseWriter {
 	return this.RespWriter
 }
 
-func (this *DemoActionContext) ResponseBody() []byte {
+func (this *BaseActionContext) ResponseBody() []byte {
 	return this.RespBody
+}
+
+func (this *BaseActionContext) BeforeAction() {
+	this.RespBody = append(this.RespBody, []byte(" index before ")...)
+}
+
+func (this *BaseActionContext) AfterAction() {
+	this.RespBody = append(this.RespBody, []byte(" index after ")...)
+}
+
+func (this *BaseActionContext) Destruct() {
+	println(" index destruct ")
 }
 
 type IndexController struct {
 }
 
 func (this *IndexController) NewActionContext(req *http.Request, respWriter http.ResponseWriter) controller.ActionContext {
-	return &DemoActionContext{
+	return &BaseActionContext{
 		Req:        req,
 		RespWriter: respWriter,
 	}
 }
 
-func (this *IndexController) BeforeAction(context controller.ActionContext) {
-	acontext := context.(*DemoActionContext)
-
-	acontext.RespBody = append(acontext.RespBody, []byte(" index before ")...)
-}
-
-func (this *IndexController) IndexAction(context *DemoActionContext) {
+func (this *IndexController) IndexAction(context *BaseActionContext) {
 	context.RespBody = append(context.RespBody, []byte(" index action ")...)
 }
 
-func (this *IndexController) RedirectAction(context *DemoActionContext) {
+func (this *IndexController) RedirectAction(context *BaseActionContext) {
 	system.Redirect302("https://github.com/Andals/gobox")
 }
 
-func (this *IndexController) AfterAction(context controller.ActionContext) {
-	acontext := context.(*DemoActionContext)
-
-	acontext.RespBody = append(acontext.RespBody, []byte(" index after ")...)
+type DemoActionContext struct {
+	*BaseActionContext
 }
 
-func (this *IndexController) Destruct(context controller.ActionContext) {
-	println(" index destruct ")
+func (this *DemoActionContext) BeforeAction() {
+	this.RespBody = append(this.RespBody, []byte(" demo before ")...)
+}
+
+func (this *DemoActionContext) AfterAction() {
+	this.RespBody = append(this.RespBody, []byte(" demo after ")...)
+}
+
+func (this *DemoActionContext) Destruct() {
+	println(" demo destruct ")
 }
 
 type DemoController struct {
@@ -77,15 +90,11 @@ type DemoController struct {
 
 func (this *DemoController) NewActionContext(req *http.Request, respWriter http.ResponseWriter) controller.ActionContext {
 	return &DemoActionContext{
-		Req:        req,
-		RespWriter: respWriter,
+		&BaseActionContext{
+			Req:        req,
+			RespWriter: respWriter,
+		},
 	}
-}
-
-func (this *DemoController) BeforeAction(context controller.ActionContext) {
-	acontext := context.(*DemoActionContext)
-
-	acontext.RespBody = append(acontext.RespBody, []byte(" demo before ")...)
 }
 
 func (this *DemoController) DemoAction(context *DemoActionContext) {
@@ -94,14 +103,4 @@ func (this *DemoController) DemoAction(context *DemoActionContext) {
 
 func (this *DemoController) GetAction(context *DemoActionContext, id string) {
 	context.RespBody = append(context.RespBody, []byte(" get action id = "+id)...)
-}
-
-func (this *DemoController) AfterAction(context controller.ActionContext) {
-	acontext := context.(*DemoActionContext)
-
-	acontext.RespBody = append(acontext.RespBody, []byte(" demo after ")...)
-}
-
-func (this *DemoController) Destruct(context controller.ActionContext) {
-	println(" demo destruct ")
 }
