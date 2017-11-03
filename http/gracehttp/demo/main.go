@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-
 	http.HandleFunc("/sleep/", func(w http.ResponseWriter, r *http.Request) {
 		duration, err := time.ParseDuration(r.FormValue("duration"))
 		if err != nil {
