@@ -1,7 +1,7 @@
 package mysql
 
 import (
-	"andals/golog"
+	"github.com/andals/golog"
 
 	"database/sql"
 	"errors"

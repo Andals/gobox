@@ -4,13 +4,9 @@ import (
 	"fmt"
 	"net/url"
 	"testing"
-
-	"andals/gobox/misc"
 )
 
 func TestParse(t *testing.T) {
-	misc.PrintCallerFuncNameForTest()
-
 	qv, _ := url.ParseQuery("a=1&b=hello&c=64")
 	qs := NewQuerySet()
 

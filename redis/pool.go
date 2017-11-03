@@ -1,7 +1,7 @@
 package redis
 
 import (
-	"andals/gobox/pool"
+	"github.com/andals/gobox/pool"
 
 	"time"
 )

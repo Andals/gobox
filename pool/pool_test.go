@@ -1,7 +1,7 @@
 package pool
 
 import (
-	"andals/gobox/redis"
+	"github.com/andals/gobox/redis"
 
 	"testing"
 	"time"

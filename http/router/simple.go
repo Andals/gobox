@@ -1,11 +1,11 @@
 package router
 
 import (
+	"github.com/andals/gobox/http/controller"
+
 	"reflect"
 	"regexp"
 	"strings"
-
-	"andals/gobox/http/controller"
 )
 
 type actionItem struct {

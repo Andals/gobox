@@ -1,7 +1,7 @@
 package query
 
 import (
-	"andals/gobox/exception"
+	"github.com/andals/gobox/exception"
 
 	"net/url"
 	"strings"

@@ -1,14 +1,10 @@
 package encoding
 
 import (
-	"andals/gobox/misc"
-
 	"testing"
 )
 
 func TestBase64EncodeDecode(t *testing.T) {
-	misc.PrintCallerFuncNameForTest()
-
 	od := []byte("abc")
 
 	cd := Base64Encode(od)

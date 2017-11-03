@@ -1,7 +1,7 @@
 package client
 
 import (
-	"andals/golog"
+	"github.com/andals/golog"
 
 	"fmt"
 	"testing"

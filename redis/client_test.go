@@ -1,7 +1,7 @@
 package redis
 
 import (
-	"andals/golog"
+	"github.com/andals/golog"
 
 	"testing"
 )

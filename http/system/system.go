@@ -1,8 +1,8 @@
 package system
 
 import (
-	"andals/gobox/http/controller"
-	"andals/gobox/http/router"
+	"github.com/andals/gobox/http/controller"
+	"github.com/andals/gobox/http/router"
 
 	"net/http"
 	"reflect"

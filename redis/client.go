@@ -3,7 +3,7 @@ package redis
 import (
 	"github.com/garyburd/redigo/redis"
 
-	"andals/golog"
+	"github.com/andals/golog"
 
 	"fmt"
 )

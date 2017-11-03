@@ -3,7 +3,8 @@ package mysql
 import (
 	"github.com/go-sql-driver/mysql"
 
-	"andals/golog"
+	"github.com/andals/golog"
+
 	"time"
 )
 

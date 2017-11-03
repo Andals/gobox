@@ -8,7 +8,8 @@
 package misc
 
 import (
-	"andals/gobox/color"
+	"github.com/andals/gobox/color"
+
 	"bytes"
 	"fmt"
 	"os"

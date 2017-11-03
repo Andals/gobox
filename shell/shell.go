@@ -8,14 +8,14 @@
 package shell
 
 import (
+	"github.com/andals/gobox/misc"
+
 	"fmt"
 	"os"
 	"os/exec"
 	"os/user"
 	"strconv"
 	"strings"
-
-	"andals/gobox/misc"
 )
 
 type ShellResult struct {

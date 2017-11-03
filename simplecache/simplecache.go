@@ -1,9 +1,9 @@
 package simplecache
 
 import (
-	"time"
+	"github.com/andals/gobox/shardmap"
 
-	"andals/gobox/shardmap"
+	"time"
 )
 
 const (

@@ -1,7 +1,7 @@
 package mysql
 
 import (
-	"andals/gobox/pool"
+	"github.com/andals/gobox/pool"
 
 	"time"
 )

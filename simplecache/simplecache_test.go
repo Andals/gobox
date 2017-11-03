@@ -1,8 +1,8 @@
 package simplecache
 
 import (
-	"andals/gobox/crypto"
-	"andals/gobox/misc"
+	"github.com/andals/gobox/crypto"
+	"github.com/andals/gobox/misc"
 
 	//     "fmt"
 	"strconv"

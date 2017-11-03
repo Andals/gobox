@@ -1,8 +1,8 @@
 package mysql
 
 import (
-	"andals/gobox/misc"
-	"andals/golog"
+	"github.com/andals/gobox/misc"
+	"github.com/andals/golog"
 
 	"database/sql"
 	"strconv"

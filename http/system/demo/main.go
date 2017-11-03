@@ -1,10 +1,10 @@
 package main
 
 import (
-	"andals/gobox/http/controller"
-	"andals/gobox/http/gracehttp"
-	"andals/gobox/http/router"
-	"andals/gobox/http/system"
+	"github.com/andals/gobox/http/controller"
+	"github.com/andals/gobox/http/gracehttp"
+	"github.com/andals/gobox/http/router"
+	"github.com/andals/gobox/http/system"
 
 	"net/http"
 )

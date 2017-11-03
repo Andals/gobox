@@ -1,14 +1,10 @@
 package crypto
 
 import (
-	"andals/gobox/misc"
-
 	"testing"
 )
 
 func TestAesCBCCrypter(t *testing.T) {
-	misc.PrintCallerFuncNameForTest()
-
 	key := Md5([]byte("gobox"))
 	iv := Md5([]byte("andals"))[:AES_BLOCK_SIZE]
 	data := []byte("abc")

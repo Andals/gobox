@@ -1,14 +1,10 @@
 package crypto
 
 import (
-	"andals/gobox/misc"
-
 	"testing"
 )
 
 func TestPKCS5Padding(t *testing.T) {
-	misc.PrintCallerFuncNameForTest()
-
 	padding := &PKCS5Padding{
 		BlockSize: 16,
 	}

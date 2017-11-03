@@ -3,7 +3,7 @@ package router
 import (
 	"reflect"
 
-	"andals/gobox/http/controller"
+	"github.com/andals/gobox/http/controller"
 )
 
 type Route struct {
