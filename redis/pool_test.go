@@ -22,7 +22,8 @@ func newRedisClient() (*Client, error) {
 		Pass: "123",
 	}
 
-	return NewClient(config, nil)
+	client := NewClient(config, nil)
+	return client, nil
 }
 
 func testPool(pool *Pool, t *testing.T) {

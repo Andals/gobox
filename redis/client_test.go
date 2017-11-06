@@ -15,7 +15,7 @@ func TestClient(t *testing.T) {
 		Port: "6379",
 		Pass: "123",
 	}
-	client, _ := NewClient(config, logger)
+	client := NewClient(config, logger)
 
 	reply, _ := client.Do("set", "a", "1")
 	t.Log(reply.String())

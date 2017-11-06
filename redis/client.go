@@ -15,28 +15,13 @@ type Client struct {
 	logger golog.ILogger
 	clff   CmdLogFmtFunc
 
-	conn       redis.Conn
-	connClosed bool
+	conn      redis.Conn
+	connected bool
 }
 
-func NewClient(config *Config, logger golog.ILogger) (*Client, error) {
+func NewClient(config *Config, logger golog.ILogger) *Client {
 	if config.LogLevel == 0 {
 		config.LogLevel = golog.LEVEL_INFO
-	}
-
-	options := []redis.DialOption{
-		redis.DialConnectTimeout(config.ConnectTimeout),
-		redis.DialReadTimeout(config.ReadTimeout),
-		redis.DialWriteTimeout(config.WriteTimeout),
-	}
-
-	conn, err := redis.Dial("tcp", config.Host+":"+config.Port, options...)
-	if err != nil {
-		return nil, err
-	}
-	_, err = conn.Do("auth", config.Pass)
-	if err != nil {
-		return nil, err
 	}
 
 	if logger == nil {
@@ -46,12 +31,10 @@ func NewClient(config *Config, logger golog.ILogger) (*Client, error) {
 	this := &Client{
 		config: config,
 		logger: logger,
-
-		conn: conn,
 	}
 	this.clff = this.cmdLogFmt
 
-	return this, nil
+	return this
 }
 
 func (this *Client) SetLogger(logger golog.ILogger) *Client {
@@ -66,16 +49,45 @@ func (this *Client) SetCmdLogFmtFunc(clff CmdLogFmtFunc) *Client {
 	return this
 }
 
-func (this *Client) Closed() bool {
-	return this.connClosed
+func (this *Client) Connected() bool {
+	return this.connected
 }
 
 func (this *Client) Free() {
 	this.conn.Close()
-	this.connClosed = true
+	this.connected = false
+}
+
+func (this *Client) Connect() error {
+	options := []redis.DialOption{
+		redis.DialConnectTimeout(this.config.ConnectTimeout),
+		redis.DialReadTimeout(this.config.ReadTimeout),
+		redis.DialWriteTimeout(this.config.WriteTimeout),
+	}
+
+	conn, err := redis.Dial("tcp", this.config.Host+":"+this.config.Port, options...)
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.Do("auth", this.config.Pass)
+	if err != nil {
+		return err
+	}
+
+	this.conn = conn
+	this.connected = true
+
+	return nil
 }
 
 func (this *Client) Do(cmd string, args ...interface{}) (*Reply, error) {
+	if !this.connected {
+		if err := this.Connect(); err != nil {
+			return nil, err
+		}
+	}
+
 	this.log(cmd, args...)
 
 	reply, err := this.conn.Do(cmd, args...)
@@ -90,6 +102,12 @@ func (this *Client) Do(cmd string, args ...interface{}) (*Reply, error) {
 }
 
 func (this *Client) Send(cmd string, args ...interface{}) error {
+	if !this.connected {
+		if err := this.Connect(); err != nil {
+			return err
+		}
+	}
+
 	this.log(cmd, args...)
 
 	return this.conn.Send(cmd, args...)
@@ -100,25 +118,17 @@ func (this *Client) ExecPipelining() ([]*Reply, error) {
 }
 
 func (this *Client) BeginTrans() error {
-	cmd := "multi"
-	this.log(cmd)
-
-	return this.conn.Send(cmd)
+	return this.Send("multi")
 }
 
 func (this *Client) DiscardTrans() error {
-	cmd := "discard"
-	this.log(cmd)
+	_, err := this.Do("discard")
 
-	_, err := this.conn.Do(cmd)
 	return err
 }
 
 func (this *Client) ExecTrans() ([]*Reply, error) {
-	cmd := "exec"
-	this.log(cmd)
-
-	return this.multiDo(cmd)
+	return this.multiDo("exec")
 }
 
 func (this *Client) log(cmd string, args ...interface{}) {
@@ -137,6 +147,14 @@ func (this *Client) cmdLogFmt(cmd string, args ...interface{}) []byte {
 }
 
 func (this *Client) multiDo(cmd string) ([]*Reply, error) {
+	if !this.connected {
+		if err := this.Connect(); err != nil {
+			return nil, err
+		}
+	}
+
+	this.log(cmd)
+
 	r, err := this.conn.Do(cmd)
 	if err != nil {
 		return nil, err
