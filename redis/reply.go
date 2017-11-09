@@ -4,6 +4,24 @@ import "github.com/garyburd/redigo/redis"
 
 type Reply struct {
 	reply interface{}
+
+	Err error
+}
+
+func NewReply(reply interface{}, err error) *Reply {
+	return &Reply{
+		reply: reply,
+
+		Err: err,
+	}
+}
+
+func (this *Reply) SimpleReplyIsNil() bool {
+	if this.reply == nil {
+		return true
+	}
+
+	return false
 }
 
 func (this *Reply) ArrReplyIsNil() bool {

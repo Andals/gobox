@@ -17,6 +17,8 @@ type Client struct {
 
 	conn      redis.Conn
 	connected bool
+
+	pipeCnt int
 }
 
 func NewClient(config *Config, logger golog.ILogger) *Client {
@@ -81,24 +83,22 @@ func (this *Client) Connect() error {
 	return nil
 }
 
-func (this *Client) Do(cmd string, args ...interface{}) (*Reply, error) {
+func (this *Client) Do(cmd string, args ...interface{}) *Reply {
 	if !this.connected {
 		if err := this.Connect(); err != nil {
-			return nil, err
+			return NewReply(nil, err)
 		}
 	}
 
 	this.log(cmd, args...)
+	this.pipeCnt = 0
 
 	reply, err := this.conn.Do(cmd, args...)
 	if err != nil {
-		return nil, err
-	}
-	if reply == nil {
-		return nil, nil
+		return NewReply(nil, err)
 	}
 
-	return &Reply{reply}, nil
+	return NewReply(reply, err)
 }
 
 func (this *Client) Send(cmd string, args ...interface{}) error {
@@ -109,11 +109,12 @@ func (this *Client) Send(cmd string, args ...interface{}) error {
 	}
 
 	this.log(cmd, args...)
+	this.pipeCnt++
 
 	return this.conn.Send(cmd, args...)
 }
 
-func (this *Client) ExecPipelining() ([]*Reply, error) {
+func (this *Client) ExecPipelining() ([]*Reply, []int) {
 	return this.multiDo("")
 }
 
@@ -122,12 +123,10 @@ func (this *Client) BeginTrans() error {
 }
 
 func (this *Client) DiscardTrans() error {
-	_, err := this.Do("discard")
-
-	return err
+	return this.Do("discard").Err
 }
 
-func (this *Client) ExecTrans() ([]*Reply, error) {
+func (this *Client) ExecTrans() ([]*Reply, []int) {
 	return this.multiDo("exec")
 }
 
@@ -146,25 +145,30 @@ func (this *Client) cmdLogFmt(cmd string, args ...interface{}) []byte {
 	return []byte(cmd)
 }
 
-func (this *Client) multiDo(cmd string) ([]*Reply, error) {
+func (this *Client) multiDo(cmd string) ([]*Reply, []int) {
 	if !this.connected {
 		if err := this.Connect(); err != nil {
-			return nil, err
+			return []*Reply{NewReply(nil, err)}, []int{0}
 		}
 	}
 
 	this.log(cmd)
-
-	r, err := this.conn.Do(cmd)
-	if err != nil {
-		return nil, err
+	if err := this.conn.Flush(); err != nil {
+		return []*Reply{NewReply(nil, err)}, []int{0}
 	}
 
-	rs := r.([]interface{})
-	replies := make([]*Reply, len(rs))
-	for i, v := range rs {
-		replies[i] = &Reply{v}
+	replies := make([]*Reply, this.pipeCnt)
+	var errIndexes []int
+
+	for i := 0; i < this.pipeCnt; i++ {
+		reply, err := this.conn.Receive()
+		replies[i] = NewReply(reply, err)
+		if err != nil {
+			errIndexes = append(errIndexes, i)
+		}
 	}
 
-	return replies, nil
+	this.pipeCnt = 0
+
+	return replies, errIndexes
 }

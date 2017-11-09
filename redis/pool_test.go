@@ -29,7 +29,7 @@ func newRedisClient() (*Client, error) {
 func testPool(pool *Pool, t *testing.T) {
 	client, _ := pool.Get()
 	client.Do("set", "redis_pool", "pool_test")
-	reply, _ := client.Do("get", "redis_pool")
+	reply := client.Do("get", "redis_pool")
 	t.Log(reply.String())
 
 	pool.Put(client)

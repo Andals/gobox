@@ -17,18 +17,20 @@ func TestClient(t *testing.T) {
 	}
 	client := NewClient(config, logger)
 
-	reply, _ := client.Do("set", "a", "1")
+	reply := client.Do("set", "a", "1")
 	t.Log(reply.String())
-	reply, _ = client.Do("get", "a")
+	reply = client.Do("get", "a")
 	t.Log(reply.Int())
 
 	client.Send("set", "a", "a")
 	client.Send("set", "b", "b")
 	client.Send("get", "a")
 	client.Send("get", "b")
-	replies, _ := client.ExecPipelining()
+	replies, errIndexes := client.ExecPipelining()
+	t.Log(errIndexes)
 	for _, reply := range replies {
 		t.Log(reply.String())
+		t.Log(reply.Err)
 	}
 
 	client.BeginTrans()
@@ -36,9 +38,11 @@ func TestClient(t *testing.T) {
 	client.Send("set", "b", "2")
 	client.Send("get", "a")
 	client.Send("get", "b")
-	replies, _ = client.ExecTrans()
+	replies, errIndexes = client.ExecTrans()
+	t.Log(errIndexes)
 	for _, reply := range replies {
 		t.Log(reply.String())
+		t.Log(reply.Err)
 	}
 
 	client.Free()
