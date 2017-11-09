@@ -131,6 +131,10 @@ func (this *Client) ExecTrans() ([]*Reply, []int) {
 }
 
 func (this *Client) log(cmd string, args ...interface{}) {
+	if len(cmd) == 0 {
+		return
+	}
+
 	msg := this.clff(cmd, args...)
 	if msg != nil {
 		this.logger.Log(this.config.LogLevel, msg)
