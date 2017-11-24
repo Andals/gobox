@@ -56,7 +56,10 @@ func (this *Client) Connected() bool {
 }
 
 func (this *Client) Free() {
-	this.conn.Close()
+	if this.conn != nil {
+		this.conn.Close()
+	}
+
 	this.connected = false
 }
 
