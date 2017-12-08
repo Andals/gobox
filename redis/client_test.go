@@ -38,8 +38,7 @@ func TestClient(t *testing.T) {
 	client.Send("set", "b", "2")
 	client.Send("get", "a")
 	client.Send("get", "b")
-	replies, errIndexes = client.ExecTrans()
-	t.Log(errIndexes)
+	replies, _ = client.ExecTrans()
 	for _, reply := range replies {
 		t.Log(reply.String())
 		t.Log(reply.Err)
