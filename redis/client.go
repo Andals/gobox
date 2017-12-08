@@ -129,8 +129,19 @@ func (this *Client) DiscardTrans() error {
 	return this.Do("discard").Err
 }
 
-func (this *Client) ExecTrans() ([]*Reply, []int) {
-	return this.multiDo("exec")
+func (this *Client) ExecTrans() ([]*Reply, error) {
+	reply := this.Do("exec")
+	values, err := redis.Values(reply.reply, reply.Err)
+	if err != nil {
+		return nil, err
+	}
+
+	replies := make([]*Reply, len(values))
+	for i, value := range values {
+		replies[i] = NewReply(value, nil)
+	}
+
+	return replies, nil
 }
 
 func (this *Client) log(cmd string, args ...interface{}) {
