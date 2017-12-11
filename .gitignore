@@ -7,3 +7,5 @@ tags
 gobox.iml
 
 .arcconfig
+
+vendor
