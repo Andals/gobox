@@ -22,6 +22,8 @@ type Config struct {
 	ConnectTimeout time.Duration
 	ReadTimeout    time.Duration
 	WriteTimeout   time.Duration
+
+	TimeoutAutoReconnect bool
 }
 
 func NewConfig(host, port, pass string) *Config {
@@ -35,5 +37,7 @@ func NewConfig(host, port, pass string) *Config {
 		ConnectTimeout: DEFAULT_CONNECT_TIMEOUT,
 		ReadTimeout:    DEFAULT_READ_TIMEOUT,
 		WriteTimeout:   DEFAULT_WRITE_TIMEOUT,
+
+		TimeoutAutoReconnect: true,
 	}
 }

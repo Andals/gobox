@@ -6,9 +6,15 @@ import (
 	"github.com/andals/golog"
 
 	"fmt"
+	"io"
 )
 
 type CmdLogFmtFunc func(cmd string, args ...interface{}) []byte
+
+type cmdArgs struct {
+	cmd  string
+	args []interface{}
+}
 
 type Client struct {
 	config *Config
@@ -18,7 +24,7 @@ type Client struct {
 	conn      redis.Conn
 	connected bool
 
-	pipeCnt int
+	pipeCmds []*cmdArgs
 }
 
 func NewClient(config *Config, logger golog.ILogger) *Client {
@@ -33,6 +39,8 @@ func NewClient(config *Config, logger golog.ILogger) *Client {
 	this := &Client{
 		config: config,
 		logger: logger,
+
+		pipeCmds: []*cmdArgs{},
 	}
 	this.clff = this.cmdLogFmt
 
@@ -94,35 +102,113 @@ func (this *Client) Do(cmd string, args ...interface{}) *Reply {
 	}
 
 	this.log(cmd, args...)
-	this.pipeCnt = 0
+	defer func() {
+		this.pipeCmds = []*cmdArgs{}
+	}()
+
+	for _, ca := range this.pipeCmds {
+		if err := this.conn.Send(ca.cmd, ca.args...); err != nil {
+			return NewReply(nil, err)
+		}
+	}
 
 	reply, err := this.conn.Do(cmd, args...)
 	if err != nil {
-		return NewReply(nil, err)
+		if err != io.EOF {
+			return NewReply(nil, err)
+		}
+		if !this.config.TimeoutAutoReconnect {
+			return NewReply(nil, err)
+		}
+		err = this.reconnect()
+		if err != nil {
+			return NewReply(nil, err)
+		}
+
+		for _, ca := range this.pipeCmds {
+			if err = this.conn.Send(ca.cmd, ca.args...); err != nil {
+				return NewReply(nil, err)
+			}
+		}
+		reply, err = this.conn.Do(cmd, args...)
+		if err != nil {
+			return NewReply(nil, err)
+		}
 	}
 
 	return NewReply(reply, err)
 }
 
-func (this *Client) Send(cmd string, args ...interface{}) error {
-	if !this.connected {
-		if err := this.Connect(); err != nil {
-			return err
-		}
-	}
-
+func (this *Client) Send(cmd string, args ...interface{}) {
 	this.log(cmd, args...)
-	this.pipeCnt++
-
-	return this.conn.Send(cmd, args...)
+	this.pipeCmds = append(this.pipeCmds, &cmdArgs{cmd, args})
 }
 
 func (this *Client) ExecPipelining() ([]*Reply, []int) {
-	return this.multiDo("")
+	if !this.connected {
+		if err := this.Connect(); err != nil {
+			return []*Reply{NewReply(nil, err)}, []int{0}
+		}
+	}
+
+	defer func() {
+		this.pipeCmds = []*cmdArgs{}
+	}()
+
+	for _, ca := range this.pipeCmds {
+		if err := this.conn.Send(ca.cmd, ca.args...); err != nil {
+			return []*Reply{NewReply(nil, err)}, []int{0}
+		}
+	}
+	if err := this.conn.Flush(); err != nil {
+		return []*Reply{NewReply(nil, err)}, []int{0}
+	}
+
+	reply, err := this.conn.Receive()
+	if err != nil {
+		if err != io.EOF {
+			return []*Reply{NewReply(nil, err)}, []int{0}
+		}
+		if !this.config.TimeoutAutoReconnect {
+			return []*Reply{NewReply(nil, err)}, []int{0}
+		}
+		err = this.reconnect()
+		if err != nil {
+			return []*Reply{NewReply(nil, err)}, []int{0}
+		}
+
+		for _, ca := range this.pipeCmds {
+			if err = this.conn.Send(ca.cmd, ca.args...); err != nil {
+				return []*Reply{NewReply(nil, err)}, []int{0}
+			}
+		}
+
+		if err = this.conn.Flush(); err != nil {
+			return []*Reply{NewReply(nil, err)}, []int{0}
+		}
+		reply, err = this.conn.Receive()
+		if err != nil {
+			return []*Reply{NewReply(nil, err)}, []int{0}
+		}
+	}
+
+	replies := make([]*Reply, len(this.pipeCmds))
+	var errIndexes []int
+
+	replies[0] = NewReply(reply, nil)
+	for i := 1; i < len(this.pipeCmds); i++ {
+		reply, err := this.conn.Receive()
+		replies[i] = NewReply(reply, err)
+		if err != nil {
+			errIndexes = append(errIndexes, i)
+		}
+	}
+
+	return replies, errIndexes
 }
 
-func (this *Client) BeginTrans() error {
-	return this.Send("multi")
+func (this *Client) BeginTrans() {
+	this.Send("multi")
 }
 
 func (this *Client) DiscardTrans() error {
@@ -163,30 +249,8 @@ func (this *Client) cmdLogFmt(cmd string, args ...interface{}) []byte {
 	return []byte(cmd)
 }
 
-func (this *Client) multiDo(cmd string) ([]*Reply, []int) {
-	if !this.connected {
-		if err := this.Connect(); err != nil {
-			return []*Reply{NewReply(nil, err)}, []int{0}
-		}
-	}
+func (this *Client) reconnect() error {
+	this.Free()
 
-	this.log(cmd)
-	if err := this.conn.Flush(); err != nil {
-		return []*Reply{NewReply(nil, err)}, []int{0}
-	}
-
-	replies := make([]*Reply, this.pipeCnt)
-	var errIndexes []int
-
-	for i := 0; i < this.pipeCnt; i++ {
-		reply, err := this.conn.Receive()
-		replies[i] = NewReply(reply, err)
-		if err != nil {
-			errIndexes = append(errIndexes, i)
-		}
-	}
-
-	this.pipeCnt = 0
-
-	return replies, errIndexes
+	return this.Connect()
 }
