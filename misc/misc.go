@@ -11,9 +11,11 @@ import (
 	"github.com/andals/gobox/color"
 
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 )
 
 func IntSliceUnique(s []int) []int {
@@ -82,4 +84,38 @@ func AppendBytes(b []byte, elems ...[]byte) []byte {
 	}
 
 	return buf.Bytes()
+}
+
+func ListFilesInDir(rootDir string) ([]string, error) {
+	rootDir = strings.TrimRight(rootDir, "/")
+	if !DirExist(rootDir) {
+		return nil, errors.New("Dir not exists")
+	}
+
+	var fileList []string
+	dirList := []string{rootDir}
+
+	for i := 0; i < len(dirList); i++ {
+		curDir := dirList[i]
+		file, err := os.Open(dirList[i])
+		if err != nil {
+			return nil, err
+		}
+
+		fis, err := file.Readdir(-1)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, fi := range fis {
+			path := curDir + "/" + fi.Name()
+			if fi.IsDir() {
+				dirList = append(dirList, path)
+			} else {
+				fileList = append(fileList, path)
+			}
+		}
+	}
+
+	return fileList, nil
 }

@@ -63,3 +63,17 @@ func TestAppendBytes(t *testing.T) {
 
 	fmt.Println(string(b))
 }
+
+func TestListFilesInDir(t *testing.T) {
+	PrintCallerFuncNameForTest()
+
+	fileList, err := ListFilesInDir("/home/ligang/tmp")
+	if err != nil {
+		t.Log(err)
+		return
+	}
+
+	for _, path := range fileList {
+		t.Log(path)
+	}
+}
