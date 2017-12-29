@@ -2,24 +2,29 @@ package redis
 
 import (
 	"github.com/andals/gobox/pool"
-
-	"time"
 )
+
+type PConfig struct {
+	pool.Config
+
+	NewClientFunc func() (*Client, error)
+}
 
 type Pool struct {
 	p *pool.Pool
 
-	ncf NewClientFunc
+	config *PConfig
 }
 
-type NewClientFunc func() (*Client, error)
-
-func NewPool(clientTimeout time.Duration, size int, ncf NewClientFunc) *Pool {
+func NewPool(config *PConfig) *Pool {
 	this := &Pool{
-		ncf: ncf,
+		config: config,
 	}
 
-	this.p = pool.NewPool(clientTimeout, size, this.newConn)
+	config.NewConnFunc = this.newConn
+	config.KeepAliveFunc = keepAlive
+
+	this.p = pool.NewPool(&this.config.Config)
 
 	return this
 }
@@ -38,5 +43,11 @@ func (this *Pool) Put(client *Client) error {
 }
 
 func (this *Pool) newConn() (pool.IConn, error) {
-	return this.ncf()
+	return this.config.NewClientFunc()
+}
+
+func keepAlive(conn pool.IConn) error {
+	client := conn.(*Client)
+
+	return client.Do("ping").Err
 }

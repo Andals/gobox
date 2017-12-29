@@ -8,7 +8,7 @@ import (
 )
 
 func TestClient(t *testing.T) {
-	client := getClient()
+	client := getTestClient()
 
 	reply := client.Do("set", "a", "1")
 	t.Log(reply.String())
@@ -41,7 +41,7 @@ func TestClient(t *testing.T) {
 }
 
 func TestAutoReconnect(t *testing.T) {
-	client := getClient()
+	client := getTestClient()
 
 	reply := client.Do("set", "a", "1")
 	t.Log(reply.String())
@@ -79,7 +79,7 @@ func TestAutoReconnect(t *testing.T) {
 	client.Free()
 }
 
-func getClient() *Client {
+func getTestClient() *Client {
 	w, _ := golog.NewFileWriter("/tmp/test_redis.log")
 	logger, _ := golog.NewSimpleLogger(w, golog.LEVEL_INFO, golog.NewSimpleFormater())
 	config := NewConfig("127.0.0.1", "6379", "123")
