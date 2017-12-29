@@ -7,7 +7,11 @@ import (
 )
 
 func TestPool(t *testing.T) {
-	pool := NewPool(time.Second*5, 300, newMysqlClient)
+	config := &PConfig{NewClientFunc: newMysqlTestClient}
+	config.Size = 100
+	config.MaxIdleTime = time.Second * 5
+
+	pool := NewPool(config)
 
 	testPool(pool, t)
 	testPool(pool, t)
@@ -16,7 +20,7 @@ func TestPool(t *testing.T) {
 	testPool(pool, t)
 }
 
-func newMysqlClient() (*Client, error) {
+func newMysqlTestClient() (*Client, error) {
 	return NewClient(getTestConfig(), nil)
 }
 

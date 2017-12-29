@@ -10,7 +10,7 @@ type IConn interface {
 }
 
 type Config struct {
-	Size              int64
+	Size              int
 	MaxIdleTime       time.Duration
 	KeepAliveInterval time.Duration
 
