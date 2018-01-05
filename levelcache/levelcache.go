@@ -100,6 +100,13 @@ func (this *Cache) Get(key []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	if cv.Expire != 0 {
+		if time.Now().Unix()-cv.AddTime > cv.Expire {
+			this.Delete(key)
+			return nil, nil
+		}
+	}
+
 	return cv.Value, nil
 }
 

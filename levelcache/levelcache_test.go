@@ -1,7 +1,6 @@
 package levelcache
 
 import (
-	"fmt"
 	"testing"
 	"time"
 )
@@ -16,14 +15,14 @@ func TestCache(t *testing.T) {
 
 	value, _ = cache.Get(key)
 	sv := string(value)
-	fmt.Println(sv)
+	t.Log(sv)
 	if sv != "v1" {
 		t.Fatal("set get error")
 	}
 
-	time.Sleep(7 * time.Second)
+	time.Sleep(6 * time.Second)
 
 	v, err := cache.Get(key)
 	sv = string(v)
-	fmt.Println(sv, err)
+	t.Log(sv, err)
 }
