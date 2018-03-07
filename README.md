@@ -1,3 +1,5 @@
+Move to https://github.com/goinbox
+
 # gobox
 
 [doc](https://godoc.org/github.com/Andals/gobox)
